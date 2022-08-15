@@ -42,13 +42,13 @@ class FSWPlugin(FSWPluginInterface):
         self._cfs_msgs_dir = get_package_share_directory(self._msg_pkg)
 
         self._node.declare_parameter('plugin_params.udp_receive_port', 1234)
-        self._udp_receive_port = self._node.get_parameter('plugin_params.udp_receive_port').get_parameter_value().\
-            integer_value
+        self._udp_receive_port = self._node.get_parameter('plugin_params.udp_receive_port').\
+            get_parameter_value().integer_value
         self._node.get_logger().info("  using udp_receive_port: " + str(self._udp_receive_port))
 
         self._node.declare_parameter('plugin_params.udp_send_port', 1235)
-        self._udp_send_port = self._node.get_parameter('plugin_params.udp_send_port').get_parameter_value().\
-            integer_value
+        self._udp_send_port = self._node.get_parameter('plugin_params.udp_send_port').\
+            get_parameter_value().integer_value
         self._node.get_logger().info("  using udp_send_port: " + str(self._udp_send_port))
 
         self._node.declare_parameter('plugin_params.udp_ip', '127.0.0.1')
@@ -56,14 +56,12 @@ class FSWPlugin(FSWPluginInterface):
             string_value
         self._node.get_logger().info("  using udp_ip: " + self._udp_ip)
 
-
-        # these lists will hold information about the message structures and MIDs once we are parsing
-        # the info from the param file and the juicer sql databases
+        # these lists will hold information about the message structures and MIDs once we are
+        # parsing the info from the param file and the juicer sql databases
         self._telem_info = []
         self._command_info = []
 
         self._recv_map = {}
-
 
         ###########################################################
         ###########################################################
