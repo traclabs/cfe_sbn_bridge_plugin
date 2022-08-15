@@ -2,4 +2,8 @@ cfe_sbn_bridge:
   ros__parameters:
     plugin_name: cfe_sbn_plugin.cfe_sbn_plugin
     plugin_params:
-      cfs_root: /home/swhart/code/TL-cFS
+      cfs_root: ~/code/cFS
+      msg_pkg: cfs_groundsystem_msgs
+      udp_receive_port: 2235
+      udp_send_port: 2234
+      udp_id: '127.0.0.1'
