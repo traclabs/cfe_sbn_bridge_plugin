@@ -1,20 +1,13 @@
 #!/usr/bin/env python3
 
+import os
+
 from fsw_ros2_bridge.fsw_plugin_interface import FSWPluginInterface
 
-import os
+from cfe_sbn_plugin.sbn_receiver import SBNReceiver
+from cfe_sbn_plugin.sbn_sender import SBNSender
 # from fsw_ros2_bridge.telem_info import TelemInfo
 # from fsw_ros2_bridge.command_info import CommandInfo
-
-# from cfe_sbn_plugin.telem_pages_info import TelemPagesInfo
-# from cfe_sbn_plugin.cmd_pages_info import CmdPagesInfo
-
-# from cfe_sbn_plugin.cfs_telem_reciever import CFSTelemReciever
-# from cfe_sbn_plugin.cfs_command_broadcaster import CFSCommandBroadcaster
-
-# from cfe_sbn_plugin.routing_service import RoutingService
-
-# from pathlib import Path
 
 from ament_index_python.packages import get_package_share_directory
 
@@ -25,7 +18,6 @@ class FSWPlugin(FSWPluginInterface):
 
         self._node = node
         self._node.get_logger().info("Setting up cFE-SBN bridge plugin")
-
         # self._routing_service = None
 
         self._node.declare_parameter('plugin_params.cfs_root', '~/code/cFS')
@@ -69,6 +61,9 @@ class FSWPlugin(FSWPluginInterface):
         ###########################################################
         ###########################################################
         self._node.get_logger().info("Setting up connection to SBN application!!")
+        self._sbn_sender = SBNSender(self._node, self._udp_ip, self._udp_send_port)
+        self._sbn_receiver = SBNReceiver(self._node, self._udp_ip, self._udp_receive_port,
+                                         self._sbn_sender)
 
     def get_telemetry_message_info(self):
         return self._telem_info
