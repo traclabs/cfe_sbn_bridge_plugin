@@ -1,6 +1,6 @@
 import socket
 import struct
-
+import rclpy
 
 class SBNReceiver():
 
@@ -10,6 +10,8 @@ class SBNReceiver():
         self._udp_port = udp_port
         self._timer_period = 0.1
         self._sender = sender
+        self._connected = False
+        self._last_heartbeat_rx = self._node.get_clock().now()
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._sock.bind((self._udp_ip, self._udp_port))
         self._timer = self._node.create_timer(self._timer_period, self.timer_callback)
@@ -89,11 +91,23 @@ class SBNReceiver():
 
     def process_sbn_protocol_msg(self, msg):
         protocol_id = self.read_bytes(msg, 1)
+        self._connected = True
         return (protocol_id)
 
     def handle_sbn_msg(self, msg):
         results = self.parse_sbn_header(msg)
         if results is not None:
+            
+            # If we haven't received a heartbeat in a while, we should 
+            # say we aren't connected.
+            hb_delta = self._node.get_clock().now() - self._last_heartbeat_rx
+            if hb_delta > rclpy.time.Duration(seconds=10.0):
+                self._connected = False
+
+            # If we're not connected, send a protocol message.
+            if not self._connected:
+                self._sender.send_protocol_msg()
+
             (message_size, message_type, processorID, spacecraftID, remaining_msg) = results
             if message_type == 1:
                 # subscription message
@@ -123,6 +137,7 @@ class SBNReceiver():
                 # SBN_UDP_HEARTBEAT_MSG
                 # Send a heartbeat back
                 self._sender.send_heartbeat()
+                self._last_heartbeat_rx = self._node.get_clock().now()
                 # Return the received heartbeat message fields.
                 return (self.get_msg_type_name(message_type),
                         processorID,
