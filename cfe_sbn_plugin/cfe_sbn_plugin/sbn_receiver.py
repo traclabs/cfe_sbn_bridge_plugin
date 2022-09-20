@@ -2,6 +2,7 @@ import socket
 import struct
 import rclpy
 
+
 class SBNReceiver():
 
     def __init__(self, node, udp_ip, udp_port, sender):
@@ -97,8 +98,7 @@ class SBNReceiver():
     def handle_sbn_msg(self, msg):
         results = self.parse_sbn_header(msg)
         if results is not None:
-            
-            # If we haven't received a heartbeat in a while, we should 
+            # If we haven't received a heartbeat in a while, we should
             # say we aren't connected.
             hb_delta = self._node.get_clock().now() - self._last_heartbeat_rx
             if hb_delta > rclpy.time.Duration(seconds=10.0):
