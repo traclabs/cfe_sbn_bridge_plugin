@@ -11,6 +11,7 @@ class SBNSender():
         self._udp_port = udp_port
         self._rev_id_string = b'$Id: dccf6239093d99c4c9351e140c15b61a95d8fc37 $\x00'
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.send_protocol_msg()
 
     def write_half_word(self, hw, msg):
         bs = struct.pack(">H", hw)
