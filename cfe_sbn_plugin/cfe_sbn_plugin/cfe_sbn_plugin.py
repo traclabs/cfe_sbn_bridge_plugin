@@ -11,6 +11,8 @@ from cfe_sbn_plugin.sbn_sender import SBNSender
 
 from ament_index_python.packages import get_package_share_directory
 
+from cfe_sbn_bridge_msgs.srv import Subscribe
+from cfe_sbn_bridge_msgs.srv import Unsubscribe
 
 class FSWPlugin(FSWPluginInterface):
 
@@ -48,6 +50,14 @@ class FSWPlugin(FSWPluginInterface):
             string_value
         self._node.get_logger().info("  using udp_ip: " + self._udp_ip)
 
+        # Create the subscribe/unsubscribe services.
+        self._subscribe_srv = self._node.create_service(Subscribe, 
+                                                        '/cfe_sbn_bridge/subscribe',
+                                                        self.subscribe_callback)
+        self._unsubscribe_srv = self._node.create_service(Unsubscribe, 
+                                                          '/cfe_sbn_bridge/unsubscribe',
+                                                          self.unsubscribe_callback)
+
         # these lists will hold information about the message structures and MIDs once we are
         # parsing the info from the param file and the juicer sql databases
         self._telem_info = []
@@ -81,3 +91,13 @@ class FSWPlugin(FSWPluginInterface):
 
     def get_msg_package(self):
         return self._msg_pkg
+
+    def subscribe_callback(self, request, response):
+        self.get_logger().info('Subscribe()')
+        self._sbn_sender.send_subscription_msg(request.message_id)
+        return response
+
+    def unsubscribe_callback(self, request, response):
+        self.get_logger().info('Unsubscribe()')
+        self._sbn_sender.send_unsubscription_msg(request.message_id)
+        return response
