@@ -93,11 +93,11 @@ class FSWPlugin(FSWPluginInterface):
         return self._msg_pkg
 
     def subscribe_callback(self, request, response):
-        self.get_logger().info('Subscribe()')
+        self._node.get_logger().info('Subscribe()')
         self._sbn_sender.send_subscription_msg(request.message_id)
         return response
 
     def unsubscribe_callback(self, request, response):
-        self.get_logger().info('Unsubscribe()')
+        self._node.get_logger().info('Unsubscribe()')
         self._sbn_sender.send_unsubscription_msg(request.message_id)
         return response
