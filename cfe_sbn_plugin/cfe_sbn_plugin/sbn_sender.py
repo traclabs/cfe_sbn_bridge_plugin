@@ -106,3 +106,18 @@ class SBNSender():
                                             subscription_msg)
 
         self._sock.sendto(bytes(subscription_msg), (self._udp_ip, self._udp_port))
+
+    def send_cfe_message_msg(self, msg_bytes):
+        msg_size = len(msg_bytes)
+        msg_type = 3
+        processor_id = 0x2
+        spacecraft_id = 0x42
+
+        protocol_msg = []
+        protocol_msg = self.write_half_word(msg_size, protocol_msg)
+        protocol_msg = self.write_bytes([msg_type], protocol_msg)
+        protocol_msg = self.write_full_word(processor_id, protocol_msg)
+        protocol_msg = self.write_full_word(spacecraft_id, protocol_msg)
+        protocol_msg = self.write_bytes(msg_bytes, protocol_msg)
+
+        self._sock.sendto(bytes(protocol_msg), (self._udp_ip, self._udp_port))

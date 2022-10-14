@@ -17,7 +17,8 @@ find_package(rclpy REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/Subscribe.srv"
-  "srv/Unsubscribe.srv")
+  "srv/Unsubscribe.srv"
+  "srv/TriggerROSHousekeeping.srv")
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
