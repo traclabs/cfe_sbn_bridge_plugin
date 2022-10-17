@@ -61,13 +61,13 @@ class SBNSender():
 
         self._sock.sendto(bytes(protocol_msg), (self._udp_ip, self._udp_port))
 
-    def send_subscription_msg(self):
+    def send_subscription_msg(self, mid):
         msg_size = 56
         msg_type = 1
         processor_id = 0x2
         spacecraft_id = 0x42
         sbn_sub_count = 1
-        sbn_sub_msg_id = 0x00001801
+        sbn_sub_msg_id = mid
         sbn_sub_qos_priority = 0
         sbn_sub_qos_reliability = 0
 
@@ -83,3 +83,41 @@ class SBNSender():
                                             subscription_msg)
 
         self._sock.sendto(bytes(subscription_msg), (self._udp_ip, self._udp_port))
+
+    def send_unsubscription_msg(self, mid):
+        msg_size = 56
+        msg_type = 2
+        processor_id = 0x2
+        spacecraft_id = 0x42
+        sbn_sub_count = 1
+        sbn_sub_msg_id = mid
+        sbn_sub_qos_priority = 0
+        sbn_sub_qos_reliability = 0
+
+        subscription_msg = []
+        subscription_msg = self.write_half_word(msg_size, subscription_msg)
+        subscription_msg = self.write_bytes([msg_type], subscription_msg)
+        subscription_msg = self.write_full_word(processor_id, subscription_msg)
+        subscription_msg = self.write_full_word(spacecraft_id, subscription_msg)
+        subscription_msg = self.write_bytes(self._rev_id_string, subscription_msg)
+        subscription_msg = self.write_half_word(sbn_sub_count, subscription_msg)
+        subscription_msg = self.write_full_word(sbn_sub_msg_id, subscription_msg)
+        subscription_msg = self.write_bytes([sbn_sub_qos_priority, sbn_sub_qos_reliability],
+                                            subscription_msg)
+
+        self._sock.sendto(bytes(subscription_msg), (self._udp_ip, self._udp_port))
+
+    def send_cfe_message_msg(self, msg_bytes):
+        msg_size = len(msg_bytes)
+        msg_type = 3
+        processor_id = 0x2
+        spacecraft_id = 0x42
+
+        protocol_msg = []
+        protocol_msg = self.write_half_word(msg_size, protocol_msg)
+        protocol_msg = self.write_bytes([msg_type], protocol_msg)
+        protocol_msg = self.write_full_word(processor_id, protocol_msg)
+        protocol_msg = self.write_full_word(spacecraft_id, protocol_msg)
+        protocol_msg = self.write_bytes(msg_bytes, protocol_msg)
+
+        self._sock.sendto(bytes(protocol_msg), (self._udp_ip, self._udp_port))

@@ -123,6 +123,9 @@ class SBNReceiver():
                         self.process_sbn_unsubscription_msg(remaining_msg))
             elif message_type == 3:
                 # sbn cfe message transfer
+                # Send a heartbeat back
+                self._sender.send_heartbeat()
+                self._last_heartbeat_rx = self._node.get_clock().now()
                 return (self.get_msg_type_name(message_type),
                         processorID,
                         spacecraftID,
