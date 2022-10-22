@@ -1,3 +1,5 @@
+"""! @brief SBN Receiver Implementation """
+
 import socket
 import struct
 import rclpy
@@ -17,10 +19,23 @@ class SBNReceiver():
         self._sock.bind((self._udp_ip, self._udp_port))
         self._timer = self._node.create_timer(self._timer_period, self.timer_callback)
 
+        self._hb_timer = self._node.create_timer(self._timer_period*2, self.hb_timer_callback);
+
     def timer_callback(self):
         data, addr = self._sock.recvfrom(1024)  # buffer size is 1024 bytes
         self._node.get_logger().info(str(self.handle_sbn_msg(data)))
 
+    def hb_timer_callback(self):
+        # TODO: Repeat for all peers.  May move this into a discrete Peer class
+        
+        # If we haven't received a heartbeat in a while, we should
+        # say we aren't connected.
+        hb_delta = self._node.get_clock().now() - self._last_heartbeat_rx
+        if hb_delta > rclpy.time.Duration(seconds=10.0):
+            self._connected = False
+
+
+    ## Convert integer msg_type to string name
     def get_msg_type_name(self, msg_type):
         msg_type_name = "Unknown"
 
@@ -92,21 +107,20 @@ class SBNReceiver():
 
     def process_sbn_protocol_msg(self, msg):
         protocol_id = self.read_bytes(msg, 1)
-        self._connected = True
+
+        # TODO: Verify protocol_id matches expected
+        #self._connected = True
+        # TODO: Send subs
         return (protocol_id)
 
     def handle_sbn_msg(self, msg):
         results = self.parse_sbn_header(msg)
         if results is not None:
-            # If we haven't received a heartbeat in a while, we should
-            # say we aren't connected.
-            hb_delta = self._node.get_clock().now() - self._last_heartbeat_rx
-            if hb_delta > rclpy.time.Duration(seconds=10.0):
-                self._connected = False
 
             # If we're not connected, send a protocol message.
             if not self._connected:
-                self._sender.send_protocol_msg()
+                self._connected = True # TODO: Move this into sender
+                self._sender.connected()
 
             (message_size, message_type, processorID, spacecraftID, remaining_msg) = results
             if message_type == 1:
@@ -142,12 +156,12 @@ class SBNReceiver():
                 return (self.get_msg_type_name(message_type),
                         processorID,
                         spacecraftID)
-            elif message_type == 0xA0:
+            elif message_type == 0xA1:
                 # SBN_UDP_ANNOUNCE_MSG
                 return (self.get_msg_type_name(message_type),
                         processorID,
                         spacecraftID)
-            elif message_type == 0xA0:
+            elif message_type == 0xA2:
                 # SBN_UDP_DISCONN_MSG
                 return (self.get_msg_type_name(message_type),
                         processorID,

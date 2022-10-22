@@ -48,6 +48,12 @@ class FSWPlugin(FSWPluginInterface):
             string_value
         self._node.get_logger().info("  using udp_ip: " + self._udp_ip)
 
+        self._node.declare_parameter("plugin_params.processor_id", 0x2)
+        self._processor_id = self._node.get_parameter('plugin_params.processor_id').get_parameter_value().integer_value
+        self._node.declare_parameter("plugin_params.spacecraft_id", 0x42)
+        self._spacecraft_id = self._node.get_parameter('plugin_params.spacecraft_id').get_parameter_value().integer_value
+        
+
         # these lists will hold information about the message structures and MIDs once we are
         # parsing the info from the param file and the juicer sql databases
         self._telem_info = []
@@ -61,7 +67,7 @@ class FSWPlugin(FSWPluginInterface):
         ###########################################################
         ###########################################################
         self._node.get_logger().info("Setting up connection to SBN application!!")
-        self._sbn_sender = SBNSender(self._node, self._udp_ip, self._udp_send_port)
+        self._sbn_sender = SBNSender(self._node, self._udp_ip, self._udp_send_port, self._spacecraft_id, self._processor_id)
         self._sbn_receiver = SBNReceiver(self._node, self._udp_ip, self._udp_receive_port,
                                          self._sbn_sender)
 

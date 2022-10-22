@@ -4,6 +4,8 @@ cfe_sbn_bridge:
     plugin_params:
       cfs_root: ~/code/cFS
       msg_pkg: cfs_groundsystem_msgs
-      udp_receive_port: 2235
+      udp_receive_port: 2236
       udp_send_port: 2234
       udp_ip: '127.0.0.1'
+      spacecraft_id: 66
+      processor_id: 3
