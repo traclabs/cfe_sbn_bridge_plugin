@@ -15,6 +15,7 @@
 
   <depend>rcl_interfaces</depend>
   <depend>cfe_msgs</depend>
+  <depend>cfe_sbn_bridge_msgs</depend>
 
   <exec_depend>fsw_ros2_bridge</exec_depend>  
 
