@@ -7,3 +7,4 @@ cfe_sbn_bridge:
       udp_receive_port: 2235
       udp_send_port: 2234
       udp_ip: '127.0.0.1'
+      juicer_db: ["cfs_bootes-rc1-dev83_TL.sqlite"]

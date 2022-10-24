@@ -16,6 +16,8 @@ from cfe_sbn_bridge_msgs.srv import Subscribe
 from cfe_sbn_bridge_msgs.srv import Unsubscribe
 from cfe_sbn_bridge_msgs.srv import TriggerROSHousekeeping
 
+from juicer_util.juicer_interface import JuicerInterface
+
 class FSWPlugin(FSWPluginInterface):
 
     def __init__(self, node):
@@ -63,10 +65,13 @@ class FSWPlugin(FSWPluginInterface):
                                                              '/cfe_sbn_bridge/trigger_ros_hk',
                                                              self.trigger_ros_hk_callback)
 
+        resource_path = get_package_share_directory("cfe_plugin") + "/resource/"
+        self._juicer_interface = JuicerInterface(self._node, resource_path)
+
         # these lists will hold information about the message structures and MIDs once we are
         # parsing the info from the param file and the juicer sql databases
-        self._telem_info = []
-        self._command_info = []
+        self._telem_info = self._juicer_interface.get_telemetry_message_info()
+        self._command_info = self._juicer_interface.get_command_message_info()
 
         self._recv_map = {}
 
