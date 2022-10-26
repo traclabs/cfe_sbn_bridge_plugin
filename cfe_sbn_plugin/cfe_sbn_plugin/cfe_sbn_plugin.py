@@ -92,7 +92,10 @@ class FSWPlugin(FSWPluginInterface):
         return self._command_info
 
     def get_latest_data(self, key):
-        return self._recv_map[key].get_latest_data()
+        retval = None
+        if key in self._recv_map:
+            retval = self._recv_map[key].get_latest_data()
+        return retval
 
     def create_ros_msgs(self, msg_dir):
         # place holder for now
