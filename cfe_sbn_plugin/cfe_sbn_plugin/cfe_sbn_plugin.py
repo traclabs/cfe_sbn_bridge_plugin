@@ -81,9 +81,13 @@ class FSWPlugin(FSWPluginInterface):
         ###########################################################
         ###########################################################
         self._node.get_logger().info("Setting up connection to SBN application!!")
-        self._sbn_sender = SBNSender(self._node, self._udp_ip, self._udp_send_port, self._spacecraft_id, self._processor_id)
-        self._sbn_receiver = SBNReceiver(self._node, self._udp_ip, self._udp_receive_port,
-                                         self._sbn_sender)
+
+        self._sbn_receiver = SBNReceiver(self._node, self._udp_ip, self._udp_receive_port)
+
+        # TODO: self._sbn_sender should be deprecated in favor of SBNReceiver.peers
+        # TODO: Update cfg yaml to define a list of peers
+        self._sbn_sender = self._sbn_receiver.add_peer(self._udp_ip, self._udp_send_port, 0x42, 1)
+
 
     def get_telemetry_message_info(self):
         return self._telem_info
