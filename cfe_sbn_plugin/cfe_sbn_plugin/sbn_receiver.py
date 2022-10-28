@@ -5,12 +5,13 @@ import rclpy
 
 class SBNReceiver():
 
-    def __init__(self, node, udp_ip, udp_port, sender):
+    def __init__(self, node, udp_ip, udp_port, sender, tlm_callback):
         self._node = node
         self._udp_ip = udp_ip
         self._udp_port = udp_port
         self._timer_period = 0.1
         self._sender = sender
+        self._tlm_callback = tlm_callback
         self._connected = False
         self._last_heartbeat_rx = self._node.get_clock().now()
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -126,10 +127,8 @@ class SBNReceiver():
                 # Send a heartbeat back
                 self._sender.send_heartbeat()
                 self._last_heartbeat_rx = self._node.get_clock().now()
-                return (self.get_msg_type_name(message_type),
-                        processorID,
-                        spacecraftID,
-                        self.process_sbn_cfe_message_msg(remaining_msg))
+                self._tlm_callback(remaining_msg)
+                return None
             elif message_type == 4:
                 # sbn protocol message
                 return (self.get_msg_type_name(message_type),

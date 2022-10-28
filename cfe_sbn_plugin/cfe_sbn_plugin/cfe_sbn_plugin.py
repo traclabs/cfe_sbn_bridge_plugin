@@ -7,6 +7,7 @@ from fsw_ros2_bridge.fsw_plugin_interface import FSWPluginInterface
 
 from cfe_sbn_plugin.sbn_receiver import SBNReceiver
 from cfe_sbn_plugin.sbn_sender import SBNSender
+from cfe_sbn_plugin.telem_handler import TelemHandler
 # from fsw_ros2_bridge.telem_info import TelemInfo
 # from fsw_ros2_bridge.command_info import CommandInfo
 
@@ -19,6 +20,7 @@ from cfe_sbn_bridge_msgs.srv import TriggerROSHousekeeping
 from juicer_util.juicer_interface import JuicerInterface
 from juicer_util.parse_cfe_config import ParseCFEConfig
 
+
 class FSWPlugin(FSWPluginInterface):
 
     def __init__(self, node):
@@ -28,41 +30,41 @@ class FSWPlugin(FSWPluginInterface):
         # self._routing_service = None
 
         self._node.declare_parameter('plugin_params.cfs_root', '~/code/cFS')
-        self._cfs_root = self._node.get_parameter('plugin_params.cfs_root').get_parameter_value().\
+        self._cfs_root = self._node.get_parameter('plugin_params.cfs_root').get_parameter_value(). \
             string_value
         if '~' in self._cfs_root:
             self._cfs_root = os.path.expanduser(self._cfs_root)
         self._node.get_logger().info("  using cfs_root: " + self._cfs_root)
 
         self._node.declare_parameter('plugin_params.msg_pkg', 'cfe_msgs')
-        self._msg_pkg = self._node.get_parameter('plugin_params.msg_pkg').get_parameter_value().\
+        self._msg_pkg = self._node.get_parameter('plugin_params.msg_pkg').get_parameter_value(). \
             string_value
         self._node.get_logger().info("  using msg_pkg: " + self._msg_pkg)
         self._cfs_msgs_dir = get_package_share_directory(self._msg_pkg)
 
         self._node.declare_parameter('plugin_params.udp_receive_port', 1234)
-        self._udp_receive_port = self._node.get_parameter('plugin_params.udp_receive_port').\
+        self._udp_receive_port = self._node.get_parameter('plugin_params.udp_receive_port'). \
             get_parameter_value().integer_value
         self._node.get_logger().info("  using udp_receive_port: " + str(self._udp_receive_port))
 
         self._node.declare_parameter('plugin_params.udp_send_port', 1235)
-        self._udp_send_port = self._node.get_parameter('plugin_params.udp_send_port').\
+        self._udp_send_port = self._node.get_parameter('plugin_params.udp_send_port'). \
             get_parameter_value().integer_value
         self._node.get_logger().info("  using udp_send_port: " + str(self._udp_send_port))
 
         self._node.declare_parameter('plugin_params.udp_ip', '127.0.0.1')
-        self._udp_ip = self._node.get_parameter('plugin_params.udp_ip').get_parameter_value().\
+        self._udp_ip = self._node.get_parameter('plugin_params.udp_ip').get_parameter_value(). \
             string_value
         self._node.get_logger().info("  using udp_ip: " + self._udp_ip)
 
         # Create the subscribe/unsubscribe services.
-        self._subscribe_srv = self._node.create_service(Subscribe, 
+        self._subscribe_srv = self._node.create_service(Subscribe,
                                                         '/cfe_sbn_bridge/subscribe',
                                                         self.subscribe_callback)
-        self._unsubscribe_srv = self._node.create_service(Unsubscribe, 
+        self._unsubscribe_srv = self._node.create_service(Unsubscribe,
                                                           '/cfe_sbn_bridge/unsubscribe',
                                                           self.unsubscribe_callback)
-        self._trigger_ros_hk_srv = self._node.create_service(TriggerROSHousekeeping, 
+        self._trigger_ros_hk_srv = self._node.create_service(TriggerROSHousekeeping,
                                                              '/cfe_sbn_bridge/trigger_ros_hk',
                                                              self.trigger_ros_hk_callback)
 
@@ -76,9 +78,12 @@ class FSWPlugin(FSWPluginInterface):
 
         command_params = ["cfe_mid", "cmd_code"]
         telemetry_params = ["cfe_mid", "topic_name"]
-        self._cfe_config = ParseCFEConfig(self._node, command_params, telemetry_params)
-        self._cfe_config.print_commands()
-        self._cfe_config.print_telemetry()
+        cfe_config = ParseCFEConfig(self._node, command_params, telemetry_params)
+        cfe_config.print_commands()
+        cfe_config.print_telemetry()
+        self._command_dict = cfe_config.get_command_dict()
+        self._telemetry_dict = cfe_config.get_telemetry_dict()
+        self._telem_handler = TelemHandler(self._node, self._msg_pkg, self._telemetry_dict, self._juicer_interface)
 
         self._recv_map = {}
 
@@ -94,7 +99,7 @@ class FSWPlugin(FSWPluginInterface):
         self._node.get_logger().info("Setting up connection to SBN application!!")
         self._sbn_sender = SBNSender(self._node, self._udp_ip, self._udp_send_port)
         self._sbn_receiver = SBNReceiver(self._node, self._udp_ip, self._udp_receive_port,
-                                         self._sbn_sender)
+                                         self._sbn_sender, self.tlm_callback)
 
         # TESTING subscribe to housekeeping tlm message for testing
         self._sbn_sender.send_subscription_msg(0x800)
@@ -108,7 +113,7 @@ class FSWPlugin(FSWPluginInterface):
     def get_latest_data(self, key):
         retval = None
         if key in self._recv_map:
-            retval = self._recv_map[key].get_latest_data()
+            retval = self._recv_map[key]
         return retval
 
     def create_ros_msgs(self, msg_dir):
@@ -142,3 +147,9 @@ class FSWPlugin(FSWPluginInterface):
             cmd_header = getattr(msg, 'cmd_heade', None)
         if cmd_header != None:
             self._node.get_logger().info('Got command callback')
+
+    def tlm_callback(self, msg):
+        # handle telemetry from cFE
+        self._node.get_logger().info('Handling telemetry message')
+        (ros_name, msg) = self._telem_handler.handle_packet(msg)
+        self._recv_map[ros_name] = msg
