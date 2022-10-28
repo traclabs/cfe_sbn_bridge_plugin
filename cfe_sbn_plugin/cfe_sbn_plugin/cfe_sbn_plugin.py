@@ -17,6 +17,7 @@ from cfe_sbn_bridge_msgs.srv import Unsubscribe
 from cfe_sbn_bridge_msgs.srv import TriggerROSHousekeeping
 
 from juicer_util.juicer_interface import JuicerInterface
+from juicer_util.parse_cfe_config import ParseCFEConfig
 
 class FSWPlugin(FSWPluginInterface):
 
@@ -73,7 +74,17 @@ class FSWPlugin(FSWPluginInterface):
         self._telem_info = self._juicer_interface.get_telemetry_message_info()
         self._command_info = self._juicer_interface.get_command_message_info()
 
+        command_params = ["cfe_mid", "cmd_code"]
+        telemetry_params = ["cfe_mid", "topic_name"]
+        self._cfe_config = ParseCFEConfig(self._node, command_params, telemetry_params)
+        self._cfe_config.print_commands()
+        self._cfe_config.print_telemetry()
+
         self._recv_map = {}
+
+        # set up callbacks for commands from ROS
+        for ci in self._command_info:
+            ci.set_callback_func(self.cmd_callback)
 
         ###########################################################
         ###########################################################
@@ -84,6 +95,9 @@ class FSWPlugin(FSWPluginInterface):
         self._sbn_sender = SBNSender(self._node, self._udp_ip, self._udp_send_port)
         self._sbn_receiver = SBNReceiver(self._node, self._udp_ip, self._udp_receive_port,
                                          self._sbn_sender)
+
+        # TESTING subscribe to housekeeping tlm message for testing
+        self._sbn_sender.send_subscription_msg(0x800)
 
     def get_telemetry_message_info(self):
         return self._telem_info
@@ -120,3 +134,11 @@ class FSWPlugin(FSWPluginInterface):
         cfe_message = struct.pack("BBBBBBBB", 0x18, 0x97, 0xC0, 0x00, 0x00, 0x01, 0x00, 0x00)
         self._sbn_sender.send_cfe_message_msg(cfe_message)
         return response
+
+    def cmd_callback(self, msg):
+        cmd_header = getattr(msg, 'cmd_header', None)
+        # NOTE: Special case - NOLABNoArgsCmdt.msg has it misspelled
+        if cmd_header == None:
+            cmd_header = getattr(msg, 'cmd_heade', None)
+        if cmd_header != None:
+            self._node.get_logger().info('Got command callback')
