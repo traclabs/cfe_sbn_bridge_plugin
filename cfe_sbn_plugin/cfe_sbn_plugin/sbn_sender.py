@@ -163,3 +163,14 @@ class SBNSender():
 
         self._send(bytes(protocol_msg))
 
+    def add_subscriptions(self, subscriptions):
+        for sub in subscriptions:
+            self._node.get_logger().info("TODO: Subscribe to "+str(sub[0]))
+            # TODO: Add to list of subs requested by this peer if not already present and subscribe to topic in ROS
+        return subscriptions
+
+    def del_subscriptions(self, subscriptions):
+        for sub in subscriptions:
+            self._node.get_logger().info("TODO: Unsubscribe from "+str(sub[0]))
+            # TODO: If subscription is in list for this peer, remove it. If no other peers have an active subscription to this topic, then unsubscribe in ros.
+        return subscriptions

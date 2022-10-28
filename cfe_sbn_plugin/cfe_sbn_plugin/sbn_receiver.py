@@ -29,13 +29,14 @@ class SBNReceiver():
 
     ## Find a Peer by sc_id and proc_id (TODO)
     def find_peer(self, sc_id, proc_id):
+        # TODO: Validate sc_id/proc_id.  Throw an exception if peer is not recognized
         return self._sender # TODO: Only a single peer supported at present
 
     def timer_callback(self):
         try:
             data, addr = self._sock.recvfrom(1024)  # buffer size is 1024 bytes
             self._node.get_logger().info(str(self.handle_sbn_msg(data)))
-        except:
+        except socket.error:
             pass
 
     ## Convert integer msg_type to string name
@@ -87,23 +88,31 @@ class SBNReceiver():
         else:
             return None
 
-    def process_sbn_subscription_msg(self, msg):
+    ## Parse a raw subscription or unsubscription message
+    def parse_sbn_sub_msg(self, msg):
         git_id, msg = self.read_bytes(msg, 48)
         subscription_count, msg = self.read_half_word(msg)
         subscriptions = []
+
         for i in range(subscription_count):
             message_id, msg = self.read_full_word(msg)
             qos_priority, msg = self.read_bytes(msg, 1)
             qos_reliability, msg = self.read_bytes(msg, 1)
             subscriptions.append((message_id,
-                                 int.from_bytes(qos_priority, byteorder='big'),
-                                 int.from_bytes(qos_reliability, byteorder='big')))
+                                  int.from_bytes(qos_priority, byteorder='big'),
+                                  int.from_bytes(qos_reliability, byteorder='big')))
+
         return (git_id, subscriptions)
+    
+    def process_sbn_subscription_msg(self, msg, peer):
+        git_id,subscriptions = self.parse_sbn_sub_msg(msg)
+        return peer.add_subscriptions(subscriptions)
 
-    def process_sbn_unsubscription_msg(self, msg):
+    def process_sbn_unsubscription_msg(self, msg, peer):
         # Unsubscription messages are the same as subscription messages.
-        self.process_sbn_subscription_msg(msg)
-
+        git_id,subscriptions = self.parse_sbn_sub_msg(msg)
+        return peer.del_subscriptions(subscriptions)
+        
     def process_sbn_cfe_message_msg(self, msg):
         # cfe messages are just the payload of the message
         return msg
@@ -132,13 +141,13 @@ class SBNReceiver():
                 return (self.get_msg_type_name(message_type),
                         processorID,
                         spacecraftID,
-                        self.process_sbn_subscription_msg(remaining_msg))
+                        self.process_sbn_subscription_msg(remaining_msg, peer))
             elif message_type == 2:
                 # unsubscription message
                 return (self.get_msg_type_name(message_type),
                         processorID,
                         spacecraftID,
-                        self.process_sbn_unsubscription_msg(remaining_msg))
+                        self.process_sbn_unsubscription_msg(remaining_msg, peer))
             elif message_type == 3:
                 # sbn cfe message transfer
                 return (self.get_msg_type_name(message_type),
