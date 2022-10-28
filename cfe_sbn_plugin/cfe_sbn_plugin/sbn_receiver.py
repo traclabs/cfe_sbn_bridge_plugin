@@ -16,6 +16,9 @@ class SBNReceiver():
 
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._sock.bind((self._udp_ip, self._udp_port))
+
+        # Original: timer based read, with added non-blocking logic
+        self._sock.setblocking(False)
         self._timer = self._node.create_timer(self._timer_period, self.timer_callback)
 
     ## Register a Peer (formerly sender)
@@ -29,9 +32,11 @@ class SBNReceiver():
         return self._sender # TODO: Only a single peer supported at present
 
     def timer_callback(self):
-        data, addr = self._sock.recvfrom(1024)  # buffer size is 1024 bytes
-        self._node.get_logger().info(str(self.handle_sbn_msg(data)))
-
+        try:
+            data, addr = self._sock.recvfrom(1024)  # buffer size is 1024 bytes
+            self._node.get_logger().info(str(self.handle_sbn_msg(data)))
+        except:
+            pass
 
     ## Convert integer msg_type to string name
     def get_msg_type_name(self, msg_type):
