@@ -37,7 +37,7 @@ ament_python_install_package(${PROJECT_NAME})
 
 install(PROGRAMS
   cfe_sbn_plugin/cfe_sbn_plugin.py
-  cfe_sbn_plugin/sbn_sender.py
+  cfe_sbn_plugin/sbn_peer.py
   cfe_sbn_plugin/sbn_receiver.py
   DESTINATION lib/${PROJECT_NAME})
 

@@ -3,8 +3,7 @@
 import socket
 import struct
 
-# TODO: Rename SBNSender to SBNPeer
-from cfe_sbn_plugin.sbn_sender import SBNSender
+from cfe_sbn_plugin.sbn_peer import SBNPeer
 
 class SBNReceiver():
 
@@ -24,7 +23,7 @@ class SBNReceiver():
     ## Register a Peer (formerly sender)
     def add_peer(self, udp_ip, udp_port, sc_id, proc_id):
         # TODO: replace self._sender with self._peers list and function to find by sc_id/proc_id
-        self._sender = SBNSender(self._node, udp_ip, udp_port, sc_id, proc_id, self._sock)
+        self._sender = SBNPeer(self._node, udp_ip, udp_port, sc_id, proc_id, self._sock)
         return self._sender
 
     ## Find a Peer by sc_id and proc_id (TODO)

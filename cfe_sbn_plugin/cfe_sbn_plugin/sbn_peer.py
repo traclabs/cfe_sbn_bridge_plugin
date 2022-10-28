@@ -2,8 +2,7 @@ import socket
 import struct
 import rclpy
 
-## TODO: Rename from SBNSender to SBNPeer, an object representing remote SBN instances
-class SBNSender():
+class SBNPeer():
 
     def __init__(self, node, udp_ip, udp_port, sc_id, proc_id, sock):
 

@@ -6,7 +6,6 @@ import struct
 from fsw_ros2_bridge.fsw_plugin_interface import FSWPluginInterface
 
 from cfe_sbn_plugin.sbn_receiver import SBNReceiver
-from cfe_sbn_plugin.sbn_sender import SBNSender
 # from fsw_ros2_bridge.telem_info import TelemInfo
 # from fsw_ros2_bridge.command_info import CommandInfo
 
