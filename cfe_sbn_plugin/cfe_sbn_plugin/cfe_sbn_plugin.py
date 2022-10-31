@@ -8,6 +8,7 @@ from fsw_ros2_bridge.fsw_plugin_interface import FSWPluginInterface
 from cfe_sbn_plugin.sbn_receiver import SBNReceiver
 from cfe_sbn_plugin.sbn_sender import SBNSender
 from cfe_sbn_plugin.telem_handler import TelemHandler
+from cfe_sbn_plugin.command_handler import CommandHandler
 # from fsw_ros2_bridge.telem_info import TelemInfo
 # from fsw_ros2_bridge.command_info import CommandInfo
 
@@ -89,7 +90,10 @@ class FSWPlugin(FSWPluginInterface):
 
         # set up callbacks for commands from ROS
         for ci in self._command_info:
-            ci.set_callback_func(self.cmd_callback)
+            ros_name = ci.get_msg_type()
+            cmd_ids = self._command_dict[ros_name]
+            ch = CommandHandler(self._node, ci, self.command_callback, int(cmd_ids['cfe_mid'], 16), cmd_ids['cmd_code'])
+            ci.set_callback_func(ch.process_callback)
 
         ###########################################################
         ###########################################################
@@ -99,7 +103,7 @@ class FSWPlugin(FSWPluginInterface):
         self._node.get_logger().info("Setting up connection to SBN application!!")
         self._sbn_sender = SBNSender(self._node, self._udp_ip, self._udp_send_port)
         self._sbn_receiver = SBNReceiver(self._node, self._udp_ip, self._udp_receive_port,
-                                         self._sbn_sender, self.tlm_callback)
+                                         self._sbn_sender, self.telem_callback)
 
         # TESTING subscribe to housekeeping tlm message for testing
         self._sbn_sender.send_subscription_msg(0x800)
@@ -140,15 +144,15 @@ class FSWPlugin(FSWPluginInterface):
         self._sbn_sender.send_cfe_message_msg(cfe_message)
         return response
 
-    def cmd_callback(self, msg):
-        cmd_header = getattr(msg, 'cmd_header', None)
-        # NOTE: Special case - NOLABNoArgsCmdt.msg has it misspelled
-        if cmd_header == None:
-            cmd_header = getattr(msg, 'cmd_heade', None)
-        if cmd_header != None:
-            self._node.get_logger().info('Got command callback')
+    def command_callback(self, command_info, message):
+        ros_name = command_info.get_msg_type()
+        self._node.get_logger().info('Handling cmd ' + ros_name)
+        cmd_ids = self._command_dict[ros_name]
+        packet = self._juicer_interface.parse_command(command_info, message, cmd_ids['cfe_mid'], cmd_ids['cmd_code'])
+        self._sbn_sender.send_cfe_message_msg(packet)
+        self._node.get_logger().info('Command ' + ros_name + ' sent.')
 
-    def tlm_callback(self, msg):
+    def telem_callback(self, msg):
         # handle telemetry from cFE
         self._node.get_logger().info('Handling telemetry message')
         (ros_name, msg) = self._telem_handler.handle_packet(msg)
