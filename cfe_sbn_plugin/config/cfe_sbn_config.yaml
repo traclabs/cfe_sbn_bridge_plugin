@@ -2,10 +2,220 @@ cfe_sbn_bridge:
   ros__parameters:
     plugin_name: cfe_sbn_plugin.cfe_sbn_plugin
     plugin_params:
-      cfs_root: ~/code/cFS
-      msg_pkg: cfs_groundsystem_msgs
+
+      cfs_root: ~/code/TL_cFS
+      msg_pkg: cfe_msgs
       udp_receive_port: 2236
       udp_send_port: 2234
       udp_ip: '127.0.0.1'
       spacecraft_id: 66
       processor_id: 3
+      juicer_db: ["cfs_bootes-rc1-dev83_TL.sqlite"]
+      commands: ["CFEESAppNameCmd", "CFEESDeleteCDSCmd", "CFEESDumpCDSRegistryCmd", "CFEESFileNameCmd", "CFEESNoArgsCmd", "CFEESOverWriteSysLogCmd", "CFEESReloadAppCmd", "CFEESRestartCmd", "CFEESSendMemPoolStatsCmd", "CFEESSetMaxPRCountCmd", "CFEESSetPerfFilterMaskCmd", "CFEESSetPerfTriggerMaskCmd", "CFEESStartApp", "CFEESStartPerfDataCmd", "CFEESStopPerfDataCmd", "CFEEVSAppNameBitMaskCmd", "CFEEVSAppNameCmd", "CFEEVSAppNameEventIDCmd", "CFEEVSAppNameEventIDMaskCmd", "CFEEVSBitMaskCmd", "CFEEVSNoArgsCmd", "CFEEVSSetEventFormatModeCmd", "CFEEVSSetLogModeCmd", "CFEEVSWriteAppDataFileCmd", "CFEEVSWriteLogDataFileCmd", "CFESBRouteCmd", "CFESBWriteFileInfoCmd", "CFETBLAbortLoadCmd", "CFETBLActivateCmd", "CFETBLDeleteCDSCmd", "CFETBLDumpCmd", "CFETBLDumpRegistryCmd", "CFETBLLoadCmd", "CFETBLNoArgsCmd", "CFETBLNotifyCmd", "CFETBLSendRegistryCmd", "CFETBLValidateCmd", "CFETIMENoArgsCmd", "CFETIMEOneHzAdjustmentCmd", "CFETIMESetLeapSecondsCmd", "CFETIMESetSignalCmd", "CFETIMESetSourceCmd", "CFETIMESetStateCmd", "CFETIMETimeCmd", "CFETIMEToneDataCmd", "CILABNoArgsCmdt", "ROSAPPNoArgsCmdt", "SAMPLEAPPNoArgsCmdt", "SCHLABStateEntryt", "TOLABAddPacketCmdt", "TOLABEnableOutputCmdt", "TOLABNoArgsCmdt", "TOLABRemovePacketCmdt"]
+      
+      telemetry: ["CFEESOneAppTlm", "CFEESMemStatsTlm", "CFEESHousekeepingTlm", "CFEEVSLongEventTlm", "CFEEVSHousekeepingTlm", "CFEEVSShortEventTlm", "CFESBHousekeepingTlm", "CFESBStatsTlm", "CFESBAllSubscriptionsTlm", "CFESBSingleSubscriptionTlm", "CFETBLHousekeepingTlm", "CFETBLTableRegistryTlm", "CFETIMEHousekeepingTlm", "CFETIMEDiagnosticTlm"]
+      command_data:
+        CFEESAppNameCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 3  
+        CFEESDeleteCDSCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFEESDumpCDSRegistryCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 2  
+        CFEESFileNameCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFEESNoArgsCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 1  
+        CFEESOverWriteSysLogCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 1  
+        CFEESReloadAppCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 4  
+        CFEESRestartCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 2  
+        CFEESSendMemPoolStatsCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 1  
+        CFEESSetMaxPRCountCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 5  
+        CFEESSetPerfFilterMaskCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 2  
+        CFEESSetPerfTriggerMaskCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFEESStartApp:
+          cfe_mid: '0x1200'
+          cmd_code: 2  
+        CFEESStartPerfDataCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFEESStopPerfDataCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 1  
+        CFEEVSAppNameBitMaskCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFEEVSAppNameCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFEEVSAppNameEventIDCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFEEVSAppNameEventIDMaskCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFEEVSBitMaskCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFEEVSNoArgsCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 5  
+        CFEEVSSetEventFormatModeCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFEEVSSetLogModeCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 4  
+        CFEEVSWriteAppDataFileCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 6  
+        CFEEVSWriteLogDataFileCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 3  
+        CFESBRouteCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFESBWriteFileInfoCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFETBLAbortLoadCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFETBLActivateCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFETBLDeleteCDSCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFETBLDumpCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFETBLDumpRegistryCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFETBLLoadCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFETBLNoArgsCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFETBLNotifyCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFETBLSendRegistryCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFETBLValidateCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFETIMENoArgsCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFETIMEOneHzAdjustmentCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0
+        CFETIMESetLeapSecondsCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFETIMESetSignalCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFETIMESetSourceCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFETIMESetStateCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFETIMETimeCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CFETIMEToneDataCmd:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        CILABNoArgsCmdt:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        ROSAPPNoArgsCmdt:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        SAMPLEAPPNoArgsCmdt:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        SCHLABStateEntryt:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        TOLABAddPacketCmdt:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        TOLABEnableOutputCmdt:
+          cfe_mid: '0x1880'
+          cmd_code: 6
+        TOLABNoArgsCmdt:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+        TOLABRemovePacketCmdt:
+          cfe_mid: '0x1200'
+          cmd_code: 0  
+              
+      telemetry_data:
+        CFEESOneAppTlm:
+          cfe_mid: '0x80B'
+          topic_name: /cfe_es_one_app_tlm
+        CFEESMemStatsTlm:
+          cfe_mid: '0x810'
+          topic_name: /cfe_es_mem_stats_tlm
+        CFEESHousekeepingTlm:
+          cfe_mid: '0x800'
+          topic_name: /cfe_es_hk_tlm
+        CFEEVSLongEventTlm:
+          cfe_mid: '0x200'
+          topic_name: /cfe_evs_long_event_tlm
+        CFEEVSHousekeepingTlm:
+          cfe_mid: '0x801'
+          topic_name: /cfe_evs_hk_tlm
+        CFEEVSShortEventTlm:
+          cfe_mid: '0x200'
+          topic_name: /cfe_evs_short_event_tlm
+        CFESBHousekeepingTlm:
+          cfe_mid: '0x803'
+          topic_name: /cfe_sb_hk_tlm
+        CFESBStatsTlm:
+          cfe_mid: '0x80A'
+          topic_name: /cfe_sb_stats_tlm
+        CFESBAllSubscriptionsTlm:
+          cfe_mid: '0x80D'
+          topic_name: /cfe_sb_all_subscriptions_tlm
+        CFESBSingleSubscriptionTlm:
+          cfe_mid: '0x80E'
+          topic_name: /cfe_sb_single_subscription_tlm
+        CFETBLHousekeepingTlm:
+          cfe_mid: '0x804'
+          topic_name: /cfe_tbl_hk_tlm
+        CFETBLTableRegistryTlm:
+          cfe_mid: '0x80C'
+          topic_name: /cfe_tbl_table_registry_tlm
+        CFETIMEHousekeepingTlm:
+          cfe_mid: '0x805'
+          topic_name: /cfe_time_hk_tlm
+        CFETIMEDiagnosticTlm:
+          cfe_mid: '0x806'
+          topic_name: /cfe_time_diagnostic_tlm
+

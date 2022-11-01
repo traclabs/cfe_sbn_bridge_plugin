@@ -7,11 +7,12 @@ from cfe_sbn_plugin.sbn_peer import SBNPeer
 
 class SBNReceiver():
 
-    def __init__(self, node, udp_ip, udp_port):
+    def __init__(self, node, udp_ip, udp_port, tlm_callback):
         self._node = node
         self._udp_ip = udp_ip
         self._udp_port = udp_port
         self._timer_period = 0.1
+        self._tlm_callback = tlm_callback
 
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._sock.bind((self._udp_ip, self._udp_port))
@@ -149,10 +150,8 @@ class SBNReceiver():
                         self.process_sbn_unsubscription_msg(remaining_msg, peer))
             elif message_type == 3:
                 # sbn cfe message transfer
-                return (self.get_msg_type_name(message_type),
-                        processorID,
-                        spacecraftID,
-                        self.process_sbn_cfe_message_msg(remaining_msg))
+                self._tlm_callback(remaining_msg)
+                return None
             elif message_type == 4:
                 # sbn protocol message
                 return (self.get_msg_type_name(message_type),
