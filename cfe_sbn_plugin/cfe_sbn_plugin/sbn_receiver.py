@@ -1,26 +1,45 @@
+"""! @brief SBN Receiver Implementation """
+
 import socket
 import struct
-import rclpy
 
+from cfe_sbn_plugin.sbn_peer import SBNPeer
 
 class SBNReceiver():
 
-    def __init__(self, node, udp_ip, udp_port, sender):
+    def __init__(self, node, udp_ip, udp_port, tlm_callback):
         self._node = node
         self._udp_ip = udp_ip
         self._udp_port = udp_port
         self._timer_period = 0.1
-        self._sender = sender
-        self._connected = False
-        self._last_heartbeat_rx = self._node.get_clock().now()
+        self._tlm_callback = tlm_callback
+
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._sock.bind((self._udp_ip, self._udp_port))
+
+        # Original: timer based read, with added non-blocking logic
+        self._sock.setblocking(False)
         self._timer = self._node.create_timer(self._timer_period, self.timer_callback)
 
-    def timer_callback(self):
-        data, addr = self._sock.recvfrom(1024)  # buffer size is 1024 bytes
-        self._node.get_logger().info(str(self.handle_sbn_msg(data)))
+    ## Register a Peer (formerly sender)
+    def add_peer(self, udp_ip, udp_port, sc_id, proc_id):
+        # TODO: replace self._sender with self._peers list and function to find by sc_id/proc_id
+        self._sender = SBNPeer(self._node, udp_ip, udp_port, sc_id, proc_id, self._sock)
+        return self._sender
 
+    ## Find a Peer by sc_id and proc_id (TODO)
+    def find_peer(self, sc_id, proc_id):
+        # TODO: Validate sc_id/proc_id.  Throw an exception if peer is not recognized
+        return self._sender # TODO: Only a single peer supported at present
+
+    def timer_callback(self):
+        try:
+            data, addr = self._sock.recvfrom(1024)  # buffer size is 1024 bytes
+            self._node.get_logger().info(str(self.handle_sbn_msg(data)))
+        except socket.error:
+            pass
+
+    ## Convert integer msg_type to string name
     def get_msg_type_name(self, msg_type):
         msg_type_name = "Unknown"
 
@@ -69,67 +88,70 @@ class SBNReceiver():
         else:
             return None
 
-    def process_sbn_subscription_msg(self, msg):
+    ## Parse a raw subscription or unsubscription message
+    def parse_sbn_sub_msg(self, msg):
         git_id, msg = self.read_bytes(msg, 48)
         subscription_count, msg = self.read_half_word(msg)
         subscriptions = []
+
         for i in range(subscription_count):
             message_id, msg = self.read_full_word(msg)
             qos_priority, msg = self.read_bytes(msg, 1)
             qos_reliability, msg = self.read_bytes(msg, 1)
             subscriptions.append((message_id,
-                                 int.from_bytes(qos_priority, byteorder='big'),
-                                 int.from_bytes(qos_reliability, byteorder='big')))
+                                  int.from_bytes(qos_priority, byteorder='big'),
+                                  int.from_bytes(qos_reliability, byteorder='big')))
+
         return (git_id, subscriptions)
+    
+    def process_sbn_subscription_msg(self, msg, peer):
+        git_id,subscriptions = self.parse_sbn_sub_msg(msg)
+        return peer.add_subscriptions(subscriptions)
 
-    def process_sbn_unsubscription_msg(self, msg):
+    def process_sbn_unsubscription_msg(self, msg, peer):
         # Unsubscription messages are the same as subscription messages.
-        self.process_sbn_subscription_msg(msg)
-
+        git_id,subscriptions = self.parse_sbn_sub_msg(msg)
+        return peer.del_subscriptions(subscriptions)
+        
     def process_sbn_cfe_message_msg(self, msg):
         # cfe messages are just the payload of the message
         return msg
 
     def process_sbn_protocol_msg(self, msg):
         protocol_id = self.read_bytes(msg, 1)
-        self._connected = True
+
+        # TODO: Verify protocol_id matches expected
+
         return (protocol_id)
 
     def handle_sbn_msg(self, msg):
         results = self.parse_sbn_header(msg)
         if results is not None:
-            # If we haven't received a heartbeat in a while, we should
-            # say we aren't connected.
-            hb_delta = self._node.get_clock().now() - self._last_heartbeat_rx
-            if hb_delta > rclpy.time.Duration(seconds=10.0):
-                self._connected = False
-
-            # If we're not connected, send a protocol message.
-            if not self._connected:
-                self._sender.send_protocol_msg()
 
             (message_size, message_type, processorID, spacecraftID, remaining_msg) = results
+
+            peer = self.find_peer(spacecraftID, processorID)
+
+            # Update connection/heartbeat status for this peer
+            peer.connected()
+
+            # Process the message
             if message_type == 1:
                 # subscription message
                 return (self.get_msg_type_name(message_type),
                         processorID,
                         spacecraftID,
-                        self.process_sbn_subscription_msg(remaining_msg))
+                        self.process_sbn_subscription_msg(remaining_msg, peer))
             elif message_type == 2:
                 # unsubscription message
                 return (self.get_msg_type_name(message_type),
                         processorID,
                         spacecraftID,
-                        self.process_sbn_unsubscription_msg(remaining_msg))
+                        self.process_sbn_unsubscription_msg(remaining_msg, peer))
             elif message_type == 3:
                 # sbn cfe message transfer
-                # Send a heartbeat back
-                self._sender.send_heartbeat()
-                self._last_heartbeat_rx = self._node.get_clock().now()
-                return (self.get_msg_type_name(message_type),
-                        processorID,
-                        spacecraftID,
-                        self.process_sbn_cfe_message_msg(remaining_msg))
+                self._tlm_callback(remaining_msg)
+                return None
             elif message_type == 4:
                 # sbn protocol message
                 return (self.get_msg_type_name(message_type),
@@ -138,19 +160,19 @@ class SBNReceiver():
                         self.process_sbn_protocol_msg(remaining_msg))
             elif message_type == 0xA0:
                 # SBN_UDP_HEARTBEAT_MSG
-                # Send a heartbeat back
-                self._sender.send_heartbeat()
-                self._last_heartbeat_rx = self._node.get_clock().now()
+                # Send a heartbeat back 
+                peer.send_heartbeat()
+
                 # Return the received heartbeat message fields.
                 return (self.get_msg_type_name(message_type),
                         processorID,
                         spacecraftID)
-            elif message_type == 0xA0:
+            elif message_type == 0xA1:
                 # SBN_UDP_ANNOUNCE_MSG
                 return (self.get_msg_type_name(message_type),
                         processorID,
                         spacecraftID)
-            elif message_type == 0xA0:
+            elif message_type == 0xA2:
                 # SBN_UDP_DISCONN_MSG
                 return (self.get_msg_type_name(message_type),
                         processorID,
