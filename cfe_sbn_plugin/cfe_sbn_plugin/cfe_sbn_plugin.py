@@ -82,7 +82,7 @@ class FSWPlugin(FSWPluginInterface):
         self._telem_info = self._juicer_interface.get_telemetry_message_info()
         self._command_info = self._juicer_interface.get_command_message_info()
 
-        command_params = ["cfe_mid", "cmd_code"]
+        command_params = ["structure", "cfe_mid", "cmd_code", "topic_name"]
         telemetry_params = ["cfe_mid", "topic_name"]
         cfe_config = ParseCFEConfig(self._node, command_params, telemetry_params)
         cfe_config.print_commands()
@@ -94,9 +94,10 @@ class FSWPlugin(FSWPluginInterface):
         self._recv_map = {}
 
         # set up callbacks for commands from ROS
+        self._command_info = self._juicer_interface.reconcile_command_info(self._command_info, self._command_dict)
         for ci in self._command_info:
-            ros_name = ci.get_msg_type()
-            cmd_ids = self._command_dict[ros_name]
+            key = ci.get_key()
+            cmd_ids = self._command_dict[key]
             ch = CommandHandler(self._node, ci, self.command_callback, int(cmd_ids['cfe_mid'], 16), cmd_ids['cmd_code'])
             ci.set_callback_func(ch.process_callback)
 
@@ -154,9 +155,9 @@ class FSWPlugin(FSWPluginInterface):
         return response
 
     def command_callback(self, command_info, message):
-        ros_name = command_info.get_msg_type()
-        self._node.get_logger().info('Handling cmd ' + ros_name)
-        cmd_ids = self._command_dict[ros_name]
+        key_name = command_info.get_key()
+        self._node.get_logger().info('Handling cmd ' + key_name)
+        cmd_ids = self._command_dict[key_name]
         packet = self._juicer_interface.parse_command(command_info, message, cmd_ids['cfe_mid'], cmd_ids['cmd_code'])
         self._sbn_sender.send_cfe_message_msg(packet)
         self._node.get_logger().info('Command ' + ros_name + ' sent.')
