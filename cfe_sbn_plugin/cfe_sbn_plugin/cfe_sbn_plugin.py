@@ -255,7 +255,7 @@ class FSWPlugin(FSWPluginInterface):
         cmd_ids = self._command_dict[key_name]
         packet = self._juicer_interface.parse_command(command_info, message, cmd_ids['cfe_mid'], cmd_ids['cmd_code'])
         self._sbn_sender.send_cfe_message_msg(packet)
-        self._node.get_logger().info('Command ' + ros_name + ' sent.')
+        self._node.get_logger().info('Command ' + key_name + ' sent.')
 
     def telem_callback(self, msg):
         # handle telemetry from cFE
