@@ -12,11 +12,17 @@ def generate_launch_description():
         'cfe_sbn_config.yaml'
         )
 
+    juicer_config = os.path.join(
+        get_package_share_directory('juicer_util'),
+        'config',
+        'cfe_cmd_tlm_config.yaml'
+        )
+
     node = Node(
         package='fsw_ros2_bridge',
         name='cfe_sbn_bridge',
         executable='fsw_ros2_bridge',
-        parameters=[config]
+        parameters=[config, juicer_config]
     )
     ld.add_action(node)
     return ld
