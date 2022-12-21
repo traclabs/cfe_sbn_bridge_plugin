@@ -14,6 +14,8 @@ from cfe_sbn_plugin.command_handler import CommandHandler
 
 from ament_index_python.packages import get_package_share_directory
 
+from rcl_interfaces.msg import Log
+
 from cfe_sbn_bridge_msgs.srv import Subscribe
 from cfe_sbn_bridge_msgs.srv import Unsubscribe
 from cfe_sbn_bridge_msgs.srv import TriggerROSHousekeeping
@@ -119,6 +121,10 @@ class FSWPlugin(FSWPluginInterface):
         # TESTING subscribe to housekeeping tlm message for testing
         self._sbn_sender.send_subscription_msg(0x800)
 
+        # Testing.  Subscribe to the /rosout topic to get the rosout messages.  This is on the Flight side.
+        self._subscribe_srv = self._node.create_subscription(Log, '/rosout', self.rosout_callback, 10)
+
+
     def get_telemetry_message_info(self):
         return self._telem_info
 
@@ -154,6 +160,95 @@ class FSWPlugin(FSWPluginInterface):
         cfe_message = struct.pack("BBBBBBBB", 0x18, 0x97, 0xC0, 0x00, 0x00, 0x01, 0x00, 0x00)
         self._sbn_sender.send_cfe_message_msg(cfe_message)
         return response
+
+
+
+    def convert_rosout_msg_level_to_packet_id(self, l):
+        mid = ""
+        if l == 10: # Debug
+            mid = struct.pack("BB", 0x08, 0x98)
+        elif l == 20: # Info
+            mid = struct.pack("BB", 0x08, 0x99)
+        elif l == 30: # WARN
+            mid = struct.pack("BB", 0x08, 0x9A)
+        elif l == 40: # ERROR
+            mid = struct.pack("BB", 0x08, 0x9B)
+        elif l == 50: # FATAL
+            mid = struct.pack("BB", 0x08, 0x9C)
+        else:
+            # Unhandled is treated as FATAL
+            mid = struct.pack("BB", 0x08, 0x9C)
+        return mid
+
+    def convert_rosout_msg_type_to_packet_seq_ctrl(self):
+        return struct.pack("BB", 0xC0, 0x00)
+
+    def convert_rosout_msg_to_cfe_msg_size(self):
+        pri_header = 6
+        sec_header = 6
+        spare = 4
+        name_bytes = 32
+        msg_bytes = 128
+        file_bytes = 64
+        function_bytes = 32
+        line_bytes = 4
+        size = pri_header + sec_header + spare + name_bytes + msg_bytes + file_bytes + function_bytes + line_bytes
+        packet_size_field = size - 7
+        return struct.pack(">h", packet_size_field)
+
+    def convert_rosout_name(self, n):
+        # TODO Add the maxlen parameter as a setting in the config file -- this needs to match the CFE side
+        truncated_flag = len(n) > 32
+        # https://python-reference.readthedocs.io/en/latest/docs/functions/bytearray.html
+        return struct.pack("?32s", truncated_flag, bytearray(n[-32:], 'utf-8'))
+
+    def convert_rosout_msg(self, m):
+        # TODO Add the maxlen parameter as a setting in the config file -- this needs to match the CFE side
+        truncated_flag = len(m) > 128
+        return struct.pack("?128s", truncated_flag, bytearray(m[-128:], 'utf-8'))
+
+    def convert_rosout_file(self, f):
+        # TODO Add the maxlen parameter as a setting in the config file -- this needs to match the CFE side
+        truncated_flag = len(f) > 64
+        return struct.pack("?64s", truncated_flag, bytearray(f[-64:], 'utf-8'))
+
+    def convert_rosout_function(self, fn):
+        # TODO Add the maxlen parameter as a setting in the config file -- this needs to match the CFE side
+        truncated_flag = len(fn) > 32
+        return struct.pack("?32s", truncated_flag, bytearray(fn[-32:], 'utf-8'))
+
+    def convert_rosout_secondary_header(self, sec, nsec):
+        # UNIX epoch is seconds since January 1, 1970 (midnight UTC/GMT)
+        # CFE epoch is defined in the CFE build (by default it is seconds since Jan 1, 1980 midnight UTC/GMT)
+        # Got the epoch delta from https://www.epochconverter.com/
+        epoch_delta = 315532800  # TODO Get this from the configuration file somehow.
+        met_seconds = int(sec - epoch_delta) & 0xffffffff
+        # For subseconds, need to convert number of nanoseconds into number of 1/65536 seconds.
+        conversion_factor_nsec_to_subsec = 65536.0 / 1000000000.0
+        met_subseconds = int(float(nsec) * conversion_factor_nsec_to_subsec) & 0xffff
+        return struct.pack(">IH", met_seconds, met_subseconds)
+
+    def rosout_callback(self, msg):
+        if msg.level == 20:
+            self._node.get_logger().debug('Handling rosout message')
+            packet_id = self.convert_rosout_msg_level_to_packet_id(msg.level)
+            packet_seq_ctrl = self.convert_rosout_msg_type_to_packet_seq_ctrl()
+            packet_data_length = self.convert_rosout_msg_to_cfe_msg_size()
+            packet_secondary_header = self.convert_rosout_secondary_header(msg.stamp.sec, msg.stamp.nanosec)
+            log_msg = ""
+            log_msg = ( packet_id +
+                        packet_seq_ctrl +
+                        packet_data_length +
+                        packet_secondary_header +
+                        struct.pack("BBBB", 0, 0, 0, 0) + # 4 bytes of padding
+                        struct.pack("IIB", msg.stamp.sec, msg.stamp.nanosec, msg.level) + # sec, nsec, level
+                        self.convert_rosout_name(msg.name) +
+                        self.convert_rosout_msg(msg.msg) +
+                        self.convert_rosout_file(msg.file) +
+                        self.convert_rosout_function(msg.function) +
+                        struct.pack("I", msg.line)
+                    )
+            self._sbn_sender.send_cfe_message_msg(log_msg)
 
     def command_callback(self, command_info, message):
         key_name = command_info.get_key()
