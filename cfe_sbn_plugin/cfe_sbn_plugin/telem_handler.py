@@ -9,10 +9,12 @@ class TelemHandler():
         self._juicer_interface = juicer_interface
         self._msg_pkg = msg_pkg
         self._tlm_map = {}
+        self._key_map = {}
         self._ros_topic_map = {}
         for tlm in telem_info:
-            self._tlm_map[telem_info[tlm]['cfe_mid']] = tlm
+            self._tlm_map[telem_info[tlm]['cfe_mid']] = telem_info[tlm]['structure']
             self._ros_topic_map[tlm] = telem_info[tlm]['topic_name']
+            self._key_map[telem_info[tlm]['cfe_mid']] = str(tlm)
         self._node.get_logger().info('telem map is ' + str(self._tlm_map))
 
     def handle_packet(self, datagram):
@@ -24,7 +26,8 @@ class TelemHandler():
             msg = MsgType()
             setattr(msg, "seq", self.get_seq_count(datagram))
             self._juicer_interface.parse_packet(datagram, 0, self._tlm_map[packet_id], msg, self._msg_pkg)
-            return (ros_name, msg)
+            key = self._key_map[packet_id]
+            return (key, msg)
         else:
             self._node.get_logger().warn("Don't know how to handle message id " + packet_id)
 

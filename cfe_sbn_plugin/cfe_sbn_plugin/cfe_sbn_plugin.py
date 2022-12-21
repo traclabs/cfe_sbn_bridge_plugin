@@ -83,13 +83,14 @@ class FSWPlugin(FSWPluginInterface):
         self._command_info = self._juicer_interface.get_command_message_info()
 
         command_params = ["structure", "cfe_mid", "cmd_code", "topic_name"]
-        telemetry_params = ["cfe_mid", "topic_name"]
+        telemetry_params = ["structure", "cfe_mid", "topic_name"]
         cfe_config = ParseCFEConfig(self._node, command_params, telemetry_params)
         cfe_config.print_commands()
         cfe_config.print_telemetry()
         self._command_dict = cfe_config.get_command_dict()
         self._telemetry_dict = cfe_config.get_telemetry_dict()
         self._telem_handler = TelemHandler(self._node, self._msg_pkg, self._telemetry_dict, self._juicer_interface)
+        self._telem_info = self._juicer_interface.reconcile_telem_info(self._telem_info, self._telemetry_dict)
 
         self._recv_map = {}
 
@@ -160,10 +161,10 @@ class FSWPlugin(FSWPluginInterface):
         cmd_ids = self._command_dict[key_name]
         packet = self._juicer_interface.parse_command(command_info, message, cmd_ids['cfe_mid'], cmd_ids['cmd_code'])
         self._sbn_sender.send_cfe_message_msg(packet)
-        self._node.get_logger().info('Command ' + ros_name + ' sent.')
+        self._node.get_logger().info('Command ' + key_name + ' sent.')
 
     def telem_callback(self, msg):
         # handle telemetry from cFE
-        self._node.get_logger().info('Handling telemetry message')
-        (ros_name, msg) = self._telem_handler.handle_packet(msg)
-        self._recv_map[ros_name] = msg
+        (key, msg) = self._telem_handler.handle_packet(msg)
+        self._node.get_logger().info('Handling telemetry message for ' + key)
+        self._recv_map[key] = msg
