@@ -229,26 +229,26 @@ class FSWPlugin(FSWPluginInterface):
         return struct.pack(">IH", met_seconds, met_subseconds)
 
     def rosout_callback(self, msg):
-        if msg.level == 20:
-            self._node.get_logger().debug('Handling rosout message')
-            packet_id = self.convert_rosout_msg_level_to_packet_id(msg.level)
-            packet_seq_ctrl = self.convert_rosout_msg_type_to_packet_seq_ctrl()
-            packet_data_length = self.convert_rosout_msg_to_cfe_msg_size()
-            packet_secondary_header = self.convert_rosout_secondary_header(msg.stamp.sec, msg.stamp.nanosec)
-            log_msg = ""
-            log_msg = ( packet_id +
-                        packet_seq_ctrl +
-                        packet_data_length +
-                        packet_secondary_header +
-                        struct.pack("BBBB", 0, 0, 0, 0) + # 4 bytes of padding
-                        struct.pack("IIB", msg.stamp.sec, msg.stamp.nanosec, msg.level) + # sec, nsec, level
-                        self.convert_rosout_name(msg.name) +
-                        self.convert_rosout_msg(msg.msg) +
-                        self.convert_rosout_file(msg.file) +
-                        self.convert_rosout_function(msg.function) +
-                        struct.pack("I", msg.line)
-                    )
-            self._sbn_sender.send_cfe_message_msg(log_msg)
+        # if msg.level == 20:
+            # self._node.get_logger().debug('Handling rosout message')
+        packet_id = self.convert_rosout_msg_level_to_packet_id(msg.level)
+        packet_seq_ctrl = self.convert_rosout_msg_type_to_packet_seq_ctrl()
+        packet_data_length = self.convert_rosout_msg_to_cfe_msg_size()
+        packet_secondary_header = self.convert_rosout_secondary_header(msg.stamp.sec, msg.stamp.nanosec)
+        log_msg = ""
+        log_msg = ( packet_id +
+                    packet_seq_ctrl +
+                    packet_data_length +
+                    packet_secondary_header +
+                    struct.pack("BBBB", 0, 0, 0, 0) + # 4 bytes of padding
+                    struct.pack("IIB", msg.stamp.sec, msg.stamp.nanosec, msg.level) + # sec, nsec, level
+                    self.convert_rosout_name(msg.name) +
+                    self.convert_rosout_msg(msg.msg) +
+                    self.convert_rosout_file(msg.file) +
+                    self.convert_rosout_function(msg.function) +
+                    struct.pack("I", msg.line)
+                )
+        self._sbn_sender.send_cfe_message_msg(log_msg)
 
     def command_callback(self, command_info, message):
         key_name = command_info.get_key()
