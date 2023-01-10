@@ -15,7 +15,7 @@ def generate_launch_description():
     juicer_config = os.path.join(
         get_package_share_directory('juicer_util'),
         'config',
-        'cfe_cmd_tlm_config.yaml'
+        'cfe_sbn_config.yaml'
         )
 
     node = Node(
