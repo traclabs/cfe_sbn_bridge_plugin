@@ -66,6 +66,7 @@ class FSWPlugin(FSWPluginInterface):
         self._spacecraft_id = self._node.get_parameter('plugin_params.spacecraft_id').get_parameter_value().integer_value
         self._node.declare_parameter("plugin_params.epoch_delta", 315532800)
         self._epoch_delta = self._node.get_parameter('plugin_params.epoch_delta').get_parameter_value().integer_value
+        self._node.get_logger().info("Epoch delta from config file: " + str(self._epoch_delta))
         
         # Create the subscribe/unsubscribe services.
         self._subscribe_srv = self._node.create_service(Subscribe,
@@ -222,7 +223,7 @@ class FSWPlugin(FSWPluginInterface):
         # UNIX epoch is seconds since January 1, 1970 (midnight UTC/GMT)
         # CFE epoch is defined in the CFE build (by default it is seconds since Jan 1, 1980 midnight UTC/GMT)
         # Got the epoch delta from https://www.epochconverter.com/
-        epoch_delta = 315532800  # TODO Get this from the configuration file somehow.
+        epoch_delta = self._epoch_delta
         met_seconds = int(sec - epoch_delta) & 0xffffffff
         # For subseconds, need to convert number of nanoseconds into number of 1/65536 seconds.
         conversion_factor_nsec_to_subsec = 65536.0 / 1000000000.0
