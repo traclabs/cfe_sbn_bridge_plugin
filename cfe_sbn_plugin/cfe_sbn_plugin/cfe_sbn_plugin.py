@@ -67,6 +67,14 @@ class FSWPlugin(FSWPluginInterface):
         self._node.declare_parameter("plugin_params.epoch_delta", 315532800)
         self._epoch_delta = self._node.get_parameter('plugin_params.epoch_delta').get_parameter_value().integer_value
         self._node.get_logger().info("Epoch delta from config file: " + str(self._epoch_delta))
+        self._node.declare_parameter("plugin_params.rosout_name_max_length", 32)
+        self._rosout_name_max_length = self._node.get_parameter('plugin_params.rosout_name_max_length').get_parameter_value().integer_value
+        self._node.declare_parameter("plugin_params.rosout_msg_max_length", 128)
+        self._rosout_msg_max_length = self._node.get_parameter('plugin_params.rosout_msg_max_length').get_parameter_value().integer_value
+        self._node.declare_parameter("plugin_params.rosout_file_max_length", 64)
+        self._rosout_file_max_length = self._node.get_parameter('plugin_params.rosout_file_max_length').get_parameter_value().integer_value
+        self._node.declare_parameter("plugin_params.rosout_function_max_length", 32)
+        self._rosout_function_max_length = self._node.get_parameter('plugin_params.rosout_function_max_length').get_parameter_value().integer_value
         
         # Create the subscribe/unsubscribe services.
         self._subscribe_srv = self._node.create_service(Subscribe,
@@ -200,24 +208,28 @@ class FSWPlugin(FSWPluginInterface):
 
     def convert_rosout_name(self, n):
         # TODO Add the maxlen parameter as a setting in the config file -- this needs to match the CFE side
-        truncated_flag = len(n) > 32
+        truncated_flag = len(n) > self._rosout_name_max_length
         # https://python-reference.readthedocs.io/en/latest/docs/functions/bytearray.html
-        return struct.pack("?32s", truncated_flag, bytearray(n[-32:], 'utf-8'))
+        str_format = "?" + str(self._rosout_name_max_length) + "s"
+        return struct.pack(str_format, truncated_flag, bytearray(n[-self._rosout_name_max_length:], 'utf-8'))
 
     def convert_rosout_msg(self, m):
         # TODO Add the maxlen parameter as a setting in the config file -- this needs to match the CFE side
-        truncated_flag = len(m) > 128
-        return struct.pack("?128s", truncated_flag, bytearray(m[-128:], 'utf-8'))
+        truncated_flag = len(m) > self._rosout_msg_max_length
+        str_format = "?" + str(self._rosout_msg_max_length) + "s"
+        return struct.pack(str_format, truncated_flag, bytearray(m[-self._rosout_msg_max_length:], 'utf-8'))
 
     def convert_rosout_file(self, f):
         # TODO Add the maxlen parameter as a setting in the config file -- this needs to match the CFE side
-        truncated_flag = len(f) > 64
-        return struct.pack("?64s", truncated_flag, bytearray(f[-64:], 'utf-8'))
+        truncated_flag = len(f) > self._rosout_file_max_length
+        str_format = "?" + str(self._rosout_file_max_length) + "s"
+        return struct.pack(str_format, truncated_flag, bytearray(f[-self._rosout_file_max_length:], 'utf-8'))
 
     def convert_rosout_function(self, fn):
         # TODO Add the maxlen parameter as a setting in the config file -- this needs to match the CFE side
-        truncated_flag = len(fn) > 32
-        return struct.pack("?32s", truncated_flag, bytearray(fn[-32:], 'utf-8'))
+        truncated_flag = len(fn) > self._rosout_function_max_length
+        str_format = "?" + str(self._rosout_function_max_length) + "s"
+        return struct.pack(str_format, truncated_flag, bytearray(fn[-self._rosout_function_max_length:], 'utf-8'))
 
     def convert_rosout_secondary_header(self, sec, nsec):
         # UNIX epoch is seconds since January 1, 1970 (midnight UTC/GMT)

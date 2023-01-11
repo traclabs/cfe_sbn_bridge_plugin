@@ -10,4 +10,8 @@ cfe_sbn_bridge:
       spacecraft_id: 66
       processor_id: 3
       epoch_delta: 315532800
+      rosout_name_max_length: 32
+      rosout_msg_max_length: 128
+      rosout_file_max_length: 64
+      rosout_function_max_length: 32
 
