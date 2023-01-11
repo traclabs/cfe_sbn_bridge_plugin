@@ -9,4 +9,5 @@ cfe_sbn_bridge:
       udp_ip: '127.0.0.1'
       spacecraft_id: 66
       processor_id: 3
+      epoch_delta: 315532800
 

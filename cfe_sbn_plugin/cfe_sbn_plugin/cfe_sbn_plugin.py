@@ -64,6 +64,8 @@ class FSWPlugin(FSWPluginInterface):
         self._processor_id = self._node.get_parameter('plugin_params.processor_id').get_parameter_value().integer_value
         self._node.declare_parameter("plugin_params.spacecraft_id", 0x42)
         self._spacecraft_id = self._node.get_parameter('plugin_params.spacecraft_id').get_parameter_value().integer_value
+        self._node.declare_parameter("plugin_params.epoch_delta", 315532800)
+        self._epoch_delta = self._node.get_parameter('plugin_params.epoch_delta').get_parameter_value().integer_value
         
         # Create the subscribe/unsubscribe services.
         self._subscribe_srv = self._node.create_service(Subscribe,
