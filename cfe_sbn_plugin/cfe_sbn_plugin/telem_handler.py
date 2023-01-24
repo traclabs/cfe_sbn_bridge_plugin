@@ -13,8 +13,8 @@ class TelemHandler():
         self._ros_topic_map = {}
         for tlm in telem_info:
             self._tlm_map[telem_info[tlm]['cfe_mid']] = telem_info[tlm]['structure']
-            self._key_map[telem_info[tlm]['cfe_mid']] = str(tlm)
             self._ros_topic_map[tlm] = telem_info[tlm]['topic_name']
+            self._key_map[telem_info[tlm]['cfe_mid']] = str(tlm)
         self._node.get_logger().info('telem map is ' + str(self._tlm_map))
 
     def handle_packet(self, datagram):
