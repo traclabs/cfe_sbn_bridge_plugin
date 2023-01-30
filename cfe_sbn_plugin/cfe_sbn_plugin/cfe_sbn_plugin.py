@@ -120,6 +120,11 @@ class FSWPlugin(FSWPluginInterface):
 
         # TESTING subscribe to housekeeping tlm message for testing
         self._sbn_sender.send_subscription_msg(0x800)
+        self._sbn_sender.send_subscription_msg(0x898)
+        self._sbn_sender.send_subscription_msg(0x899)
+        self._sbn_sender.send_subscription_msg(0x89A)
+        self._sbn_sender.send_subscription_msg(0x89B)
+        self._sbn_sender.send_subscription_msg(0x89C)
 
         # Testing.  Subscribe to the /rosout topic to get the rosout messages.  This is on the Flight side.
         self._subscribe_srv = self._node.create_subscription(Log, '/rosout', self.rosout_callback, 10)
