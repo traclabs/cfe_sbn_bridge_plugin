@@ -229,7 +229,6 @@ class FSWPlugin(FSWPluginInterface):
         # Form the message
         rosout_msg = bytes('', 'utf-8')
         for field in rosout_header_obj.get_fields():
-           x = msg_mapping[field.get_name()]
            rosout_msg += msg_mapping[field.get_name()]
 
         # Verify the sizes match
@@ -256,7 +255,6 @@ class FSWPlugin(FSWPluginInterface):
         # Form the message
         rosout_msg = bytes('', 'utf-8')
         for field in rosout_payload_obj.get_fields():
-           x = msg_mapping[field.get_name()]
            rosout_msg += msg_mapping[field.get_name()]
 
         # Verify the sizes match
