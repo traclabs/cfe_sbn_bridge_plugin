@@ -214,13 +214,13 @@ class FSWPlugin(FSWPluginInterface):
         met_subseconds = int(float(nsec) * conversion_factor_nsec_to_subsec) & 0xffff
         return struct.pack(">IH", met_seconds, met_subseconds)
 
-    def construct_rosout_header(self, msg, packet_name):
+    def construct_rosout_header(self, msg, packet_size):
         rosout_header_obj = self._juicer_interface.get_symbol_info("CFE_MSG_TelemetryHeader")
         size = rosout_header_obj.get_size()
 
         pri_hdr = ( self.convert_rosout_msg_level_to_packet_id(msg.level) + 
                     self.convert_rosout_msg_type_to_packet_seq_ctrl() +
-                    self.convert_rosout_msg_to_cfe_msg_size(self._juicer_interface.get_symbol_info(packet_name).get_size()))
+                    self.convert_rosout_msg_to_cfe_msg_size(packet_size))
 
         msg_mapping = { "Msg" : pri_hdr,
                         "Sec" : self.convert_rosout_secondary_header(msg.stamp.sec, msg.stamp.nanosec),
@@ -262,8 +262,10 @@ class FSWPlugin(FSWPluginInterface):
         return rosout_msg
 
     def rosout_callback(self, msg):
-        header = self.construct_rosout_header(msg, "ROS_APP_RosoutTlm_t")
+        size = self._juicer_interface.get_symbol_info("ROS_APP_RosoutTlm_t").get_size()
+        header = self.construct_rosout_header(msg, size)
         payload = self.construct_rosout_payload(msg)
+        assert(size == (len(header) + len(payload)))
         self._sbn_sender.send_cfe_message_msg(header + payload)
 
     def command_callback(self, command_info, message):
