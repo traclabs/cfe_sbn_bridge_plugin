@@ -35,7 +35,7 @@ class SBNReceiver():
     def timer_callback(self):
         try:
             data, addr = self._sock.recvfrom(1024)  # buffer size is 1024 bytes
-            self._node.get_logger().info(str(self.handle_sbn_msg(data)))
+            self._node.get_logger().debug(str(self.handle_sbn_msg(data)))
         except socket.error:
             pass
 
