@@ -199,43 +199,9 @@ class FSWPlugin(FSWPluginInterface):
     def convert_rosout_msg_type_to_packet_seq_ctrl(self):
         return struct.pack("BB", 0xC0, 0x00)
 
-    def convert_rosout_msg_to_cfe_msg_size(self):
-        pri_header = 6
-        sec_header = 6
-        spare = 4
-        name_bytes = 32
-        msg_bytes = 128
-        file_bytes = 64
-        function_bytes = 32
-        line_bytes = 4
-        size = pri_header + sec_header + spare + name_bytes + msg_bytes + file_bytes + function_bytes + line_bytes
+    def convert_rosout_msg_to_cfe_msg_size(self, size):
         packet_size_field = size - 7
         return struct.pack(">h", packet_size_field)
-
-    def convert_rosout_name(self, n):
-        # TODO Add the maxlen parameter as a setting in the config file -- this needs to match the CFE side
-        truncated_flag = len(n) > self._rosout_name_max_length
-        # https://python-reference.readthedocs.io/en/latest/docs/functions/bytearray.html
-        str_format = "?" + str(self._rosout_name_max_length) + "s"
-        return struct.pack(str_format, truncated_flag, bytearray(n[-self._rosout_name_max_length:], 'utf-8'))
-
-    def convert_rosout_msg(self, m):
-        # TODO Add the maxlen parameter as a setting in the config file -- this needs to match the CFE side
-        truncated_flag = len(m) > self._rosout_msg_max_length
-        str_format = "?" + str(self._rosout_msg_max_length) + "s"
-        return struct.pack(str_format, truncated_flag, bytearray(m[-self._rosout_msg_max_length:], 'utf-8'))
-
-    def convert_rosout_file(self, f):
-        # TODO Add the maxlen parameter as a setting in the config file -- this needs to match the CFE side
-        truncated_flag = len(f) > self._rosout_file_max_length
-        str_format = "?" + str(self._rosout_file_max_length) + "s"
-        return struct.pack(str_format, truncated_flag, bytearray(f[-self._rosout_file_max_length:], 'utf-8'))
-
-    def convert_rosout_function(self, fn):
-        # TODO Add the maxlen parameter as a setting in the config file -- this needs to match the CFE side
-        truncated_flag = len(fn) > self._rosout_function_max_length
-        str_format = "?" + str(self._rosout_function_max_length) + "s"
-        return struct.pack(str_format, truncated_flag, bytearray(fn[-self._rosout_function_max_length:], 'utf-8'))
 
     def convert_rosout_secondary_header(self, sec, nsec):
         # UNIX epoch is seconds since January 1, 1970 (midnight UTC/GMT)
@@ -248,27 +214,59 @@ class FSWPlugin(FSWPluginInterface):
         met_subseconds = int(float(nsec) * conversion_factor_nsec_to_subsec) & 0xffff
         return struct.pack(">IH", met_seconds, met_subseconds)
 
+    def construct_rosout_header(self, msg, packet_size):
+        rosout_header_obj = self._juicer_interface.get_symbol_info("CFE_MSG_TelemetryHeader")
+        size = rosout_header_obj.get_size()
+
+        pri_hdr = ( self.convert_rosout_msg_level_to_packet_id(msg.level) + 
+                    self.convert_rosout_msg_type_to_packet_seq_ctrl() +
+                    self.convert_rosout_msg_to_cfe_msg_size(packet_size))
+
+        msg_mapping = { "Msg" : pri_hdr,
+                        "Sec" : self.convert_rosout_secondary_header(msg.stamp.sec, msg.stamp.nanosec),
+                        "Spare" : struct.pack("BBBB", 0, 0, 0, 0) }
+
+        # Form the message
+        rosout_msg = bytes('', 'utf-8')
+        for field in rosout_header_obj.get_fields():
+           rosout_msg += msg_mapping[field.get_name()]
+
+        # Verify the sizes match
+        assert(size == len(rosout_msg))
+        return rosout_msg
+
+    def construct_rosout_payload(self, msg):
+        rosout_payload_obj = self._juicer_interface.get_symbol_info("ROS_APP_Rosout_Payload_t")
+        size = rosout_payload_obj.get_size()
+        msg_mapping = {'sec' : struct.pack("I", msg.stamp.sec),
+                       'nsec' : struct.pack("I", msg.stamp.nanosec),
+                       'level' : struct.pack("B", msg.level),
+                       'name_truncated' : struct.pack("?", len(msg.name) > self._rosout_name_max_length),
+                       'name' : struct.pack(str(self._rosout_name_max_length) + "s", bytearray(msg.name[-self._rosout_name_max_length:], 'utf-8')),
+                       'msg_truncated' : struct.pack("?", len(msg.msg) > self._rosout_msg_max_length),
+                       'msg' : struct.pack(str(self._rosout_msg_max_length) + "s", bytearray(msg.msg[-self._rosout_msg_max_length:], 'utf-8')),
+                       'file_truncated' : struct.pack("?", len(msg.file) > self._rosout_file_max_length),
+                       'file' : struct.pack(str(self._rosout_file_max_length) + "s", bytearray(msg.file[-self._rosout_file_max_length:], 'utf-8')),
+                       'function_truncated' : struct.pack("?", len(msg.function) > self._rosout_function_max_length),
+                       'function' : struct.pack(str(self._rosout_function_max_length) + "s", bytearray(msg.function[-self._rosout_function_max_length:], 'utf-8')),
+                       '_spare0' : struct.pack("BBB", 0, 0, 0),
+                       'line' : struct.pack("I", msg.line) }
+
+        # Form the message
+        rosout_msg = bytes('', 'utf-8')
+        for field in rosout_payload_obj.get_fields():
+           rosout_msg += msg_mapping[field.get_name()]
+
+        # Verify the sizes match
+        assert(size == len(rosout_msg))
+        return rosout_msg
+
     def rosout_callback(self, msg):
-        # if msg.level == 20:
-            # self._node.get_logger().debug('Handling rosout message')
-        packet_id = self.convert_rosout_msg_level_to_packet_id(msg.level)
-        packet_seq_ctrl = self.convert_rosout_msg_type_to_packet_seq_ctrl()
-        packet_data_length = self.convert_rosout_msg_to_cfe_msg_size()
-        packet_secondary_header = self.convert_rosout_secondary_header(msg.stamp.sec, msg.stamp.nanosec)
-        log_msg = ""
-        log_msg = ( packet_id +
-                    packet_seq_ctrl +
-                    packet_data_length +
-                    packet_secondary_header +
-                    struct.pack("BBBB", 0, 0, 0, 0) + # 4 bytes of padding
-                    struct.pack("IIB", msg.stamp.sec, msg.stamp.nanosec, msg.level) + # sec, nsec, level
-                    self.convert_rosout_name(msg.name) +
-                    self.convert_rosout_msg(msg.msg) +
-                    self.convert_rosout_file(msg.file) +
-                    self.convert_rosout_function(msg.function) +
-                    struct.pack("I", msg.line)
-                )
-        self._sbn_sender.send_cfe_message_msg(log_msg)
+        size = self._juicer_interface.get_symbol_info("ROS_APP_RosoutTlm_t").get_size()
+        header = self.construct_rosout_header(msg, size)
+        payload = self.construct_rosout_payload(msg)
+        assert(size == (len(header) + len(payload)))
+        self._sbn_sender.send_cfe_message_msg(header + payload)
 
     def command_callback(self, command_info, message):
         key_name = command_info.get_key()
