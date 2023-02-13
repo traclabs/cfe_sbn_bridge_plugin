@@ -8,6 +8,7 @@ from fsw_ros2_bridge.fsw_plugin_interface import FSWPluginInterface
 from cfe_sbn_plugin.sbn_receiver import SBNReceiver
 from cfe_sbn_plugin.telem_handler import TelemHandler
 from cfe_sbn_plugin.command_handler import CommandHandler
+from cfe_sbn_plugin.sbn_peer import SBNPeer
 
 # from fsw_ros2_bridge.telem_info import TelemInfo
 # from fsw_ros2_bridge.command_info import CommandInfo
@@ -27,8 +28,9 @@ from juicer_util.parse_cfe_config import ParseCFEConfig
 class FSWPlugin(FSWPluginInterface):
 
     def __init__(self, node):
-
+        ## ROS Node pointer
         self._node = node
+        
         self._node.get_logger().info("Setting up cFE-SBN bridge plugin")
         # self._routing_service = None
 
@@ -91,6 +93,8 @@ class FSWPlugin(FSWPluginInterface):
         cfe_config.print_telemetry()
         self._command_dict = cfe_config.get_command_dict()
         self._telemetry_dict = cfe_config.get_telemetry_dict()
+
+        ## TelemHandler
         self._telem_handler = TelemHandler(self._node, self._msg_pkg, self._telemetry_dict, self._juicer_interface)
         self._telem_info = self._juicer_interface.reconcile_telem_info(self._telem_info, self._telemetry_dict)
 
@@ -113,20 +117,15 @@ class FSWPlugin(FSWPluginInterface):
 
         self._sbn_receiver = SBNReceiver(self._node, self._udp_ip, self._udp_receive_port, self.telem_callback)
 
-        # TODO: self._sbn_sender should be deprecated in favor of SBNReceiver.peers
-        # TODO: Update cfg yaml to define a list of peers
-        self._sbn_sender = self._sbn_receiver.add_peer(self._udp_ip, self._udp_send_port, 0x42, 1)
-
-
+        ## Array of dictionaries defining subscriptions that ROS is requesting from all Peers
+        # Default value list is for testing housekeeping tlm message
         # TESTING subscribe to housekeeping tlm message for testing
-        self._sbn_sender.send_subscription_msg(0x800)
-        self._sbn_sender.send_subscription_msg(0x898)
-        self._sbn_sender.send_subscription_msg(0x899)
-        self._sbn_sender.send_subscription_msg(0x89A)
-        self._sbn_sender.send_subscription_msg(0x89B)
-        self._sbn_sender.send_subscription_msg(0x89C)
+        self._ros_subscriptions = [0x800,0x898,0x899,0x89A,0x89B,0x89C]
+        
+        # TODO: Update cfg yaml to define a list of peers.
+        self._sbn_receiver.add_peer(self._udp_ip, self._udp_send_port, 0x42, 1, self._ros_subscriptions)
 
-        # Testing.  Subscribe to the /rosout topic to get the rosout messages.  This is on the Flight side.
+        # Testing.  Subscribe to the /rosout topic to get the rosout messages.  This is on the flight side
         self._subscribe_srv = self._node.create_subscription(Log, '/rosout', self.rosout_callback, 10)
 
 
@@ -150,20 +149,33 @@ class FSWPlugin(FSWPluginInterface):
     def get_msg_package(self):
         return self._msg_pkg
 
+    ## Called on receipt of ROS /cfe_sbn_bridge/subscribe
+    # @param request.message_id CFE Message ID to subscribe to
     def subscribe_callback(self, request, response):
         self._node.get_logger().info('Subscribe()')
-        self._sbn_sender.send_subscription_msg(request.message_id)
+
+        if request.message_id in self._ros_subscriptions:
+            self._node.get_logger().warn("Duplicate subscription request for " + request.message_id + " ignored.")
+        else:
+            self._ros_subscriptions.append(request.message_id); # Add to list
+            SBNPeer.send_all_subscription_msg(request.message_id); # And send to all Peers immediately
+        
         return response
 
+    ## Called on receipt of ROS /cfe_sbn_bridge/unsubscribe
+    # @param request.message_id CFE Message ID to unsubscribe to
     def unsubscribe_callback(self, request, response):
         self._node.get_logger().info('Unsubscribe()')
-        self._sbn_sender.send_unsubscription_msg(request.message_id)
+        SBNPeer.send_all_unsubscription_msg(request.message_id);
+        
+        self._ros_subscriptions.remove(request.message_id);
+
         return response
 
     def trigger_ros_hk_callback(self, request, response):
         self._node.get_logger().info('TriggerROSHk()')
         cfe_message = struct.pack("BBBBBBBB", 0x18, 0x97, 0xC0, 0x00, 0x00, 0x01, 0x00, 0x00)
-        self._sbn_sender.send_cfe_message_msg(cfe_message)
+        SBNPeer.send_all(cfe_message); # TODO: .send(0x1897, cfe_message))
         return response
 
 
@@ -253,17 +265,21 @@ class FSWPlugin(FSWPluginInterface):
                     self.convert_rosout_function(msg.function) +
                     struct.pack("I", msg.line)
                 )
-        self._sbn_sender.send_cfe_message_msg(log_msg)
+        SBNPeer.send_all(log_msg)  # DEBUG: Send unconditionally
+        #SBNPeer.send( packet_id, log_msg ) # Send only if peer has subscribed
 
     def command_callback(self, command_info, message):
         key_name = command_info.get_key()
         self._node.get_logger().info('Handling cmd ' + key_name)
         cmd_ids = self._command_dict[key_name]
         packet = self._juicer_interface.parse_command(command_info, message, cmd_ids['cfe_mid'], cmd_ids['cmd_code'])
-        self._sbn_sender.send_cfe_message_msg(packet)
-        self._node.get_logger().info('Command ' + key_name + ' sent.')
+        SBNPeer.send_all(packet); # TODO: replace with send(packet_id,packet)
+        self._node.get_logger().info('Command ' + ros_name + ' sent.')
 
-    def telem_callback(self, msg):
+    ## Message handler callback
+    # @param msg Parse a received cFE CCSDS message
+    # @param peer SBNPeer reference to originating peer (ie: for logging purposes)
+    def telem_callback(self, msg, peer):
         # handle telemetry from cFE
         (key, msg) = self._telem_handler.handle_packet(msg)
         self._node.get_logger().info('Handling telemetry message for ' + key)
