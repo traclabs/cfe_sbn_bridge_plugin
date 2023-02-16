@@ -52,10 +52,10 @@ class SBNMessageHdr():
     ## Stringify object for display/debug usage
     def __str__ (self):
         return 'SBNMessageHdr(size=' \
-           + self.size + ',sbn_type=' \
-           + self.sbn_type + ', proc_id=' \
-           + self.proc_id+', sc_id=' \
-           + sc_id+', msg=' \
+           + str(self.size) + ',sbn_type=' \
+           + str(self.sbn_type) + ', proc_id=' \
+           + str(self.proc_id)+', sc_id=' \
+           + str(sc_id)+', msg=' \
            + msg \
            + ')';
 
