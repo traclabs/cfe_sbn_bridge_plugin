@@ -9,7 +9,7 @@ from ament_index_python.packages import get_package_share_directory
 class CFEConsoleTest(Node):
 
     def __init__(self):
-        super().__init__('cfdp_wrapper')
+        super().__init__('cfe_console_test')
 
         self.get_logger().warn("================================================================")
         self.get_logger().warn("CFEConsoleTest")
