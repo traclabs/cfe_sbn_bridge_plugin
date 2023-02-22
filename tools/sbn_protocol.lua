@@ -14,13 +14,15 @@ sbn_sub_qos_reliability = ProtoField.uint8("sbn.sub_qos_reliability", "sbnQOSRel
 
 -- SBN App Message data
 sbn_cfe_msg = ProtoField.none  ("sbn.cfe_message_payload", "sbnCFEMessagePayload", base.HEX)
+sbn_cfe_msg_id = ProtoField.uint16("sbn.cfe_mid", "sbnCfeMID", base.HEX)
 
 -- SBN protocol message data
 sbn_protocol_number = ProtoField.uint8("sbn.sbn_protocol_number", "sbnProtocolNumber", base.DEC)
 
 sbn_protocol.fields = { message_size, message_type, processor_id, spacecraft_id, -- Header
                         sbn_git_id, sbn_sub_cnt, sbn_sub_msg_id, sbn_sub_qos_priority, sbn_sub_qos_reliability, -- SBN_SUB_MSG 
-                        sbn_cfe_msg, -- SBN App Message 
+                        sbn_cfe_msg, -- SBN App Message
+                        sbn_cfe_msg_id, -- SBN Msg ID
                         sbn_protocol_number -- SBN protocol message 
                      }
 
@@ -83,6 +85,7 @@ function sbn_protocol.dissector(buffer, pinfo, tree)
    end
 
    if msg_type_number == 3 then
+      subtree:add(sbn_cfe_msg_id, buffer(11, 2))
       subtree:add(sbn_cfe_msg, buffer(11, msg_size))
    end
 
