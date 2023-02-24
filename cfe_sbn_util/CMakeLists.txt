@@ -37,7 +37,7 @@ install(PROGRAMS
   DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY
-  resource launch config
+  resource launch
   DESTINATION share/${PROJECT_NAME}/
 )
 
