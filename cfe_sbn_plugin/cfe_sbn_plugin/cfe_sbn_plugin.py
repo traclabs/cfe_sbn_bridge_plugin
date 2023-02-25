@@ -250,8 +250,8 @@ class FSWPlugin(FSWPluginInterface):
     def construct_rosout_payload(self, msg):
         rosout_payload_obj = self._juicer_interface.get_symbol_info("ROS_APP_Rosout_Payload_t")
         size = rosout_payload_obj.get_size()
-        msg_mapping = {'sec' : struct.pack("I", msg.stamp.sec),
-                       'nsec' : struct.pack("I", msg.stamp.nanosec),
+        msg_mapping = {'sec' : struct.pack(">I", msg.stamp.sec),
+                       'nsec' : struct.pack(">I", msg.stamp.nanosec),
                        'level' : struct.pack("B", msg.level),
                        'name_truncated' : struct.pack("?", len(msg.name) > self._rosout_name_max_length),
                        'name' : struct.pack(str(self._rosout_name_max_length) + "s", bytearray(msg.name[-self._rosout_name_max_length:], 'utf-8')),
@@ -262,7 +262,7 @@ class FSWPlugin(FSWPluginInterface):
                        'function_truncated' : struct.pack("?", len(msg.function) > self._rosout_function_max_length),
                        'function' : struct.pack(str(self._rosout_function_max_length) + "s", bytearray(msg.function[-self._rosout_function_max_length:], 'utf-8')),
                        '_spare0' : struct.pack("BBB", 0, 0, 0),
-                       'line' : struct.pack("I", msg.line) }
+                       'line' : struct.pack(">I", msg.line) }
 
         # Form the message
         rosout_msg = bytes('', 'utf-8')
