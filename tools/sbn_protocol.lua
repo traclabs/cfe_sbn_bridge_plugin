@@ -85,8 +85,15 @@ function sbn_protocol.dissector(buffer, pinfo, tree)
    end
 
    if msg_type_number == 3 then
-      subtree:add(sbn_cfe_msg_id, buffer(11, 2))
-      subtree:add(sbn_cfe_msg, buffer(11, msg_size))
+      local mid = buffer(11,2):int()
+      subtree:add(sbn_cfe_msg_id, mid) -- buffer(11, 2))
+      
+      Dissector.get("ccsds"):call(buffer(11):tvb(),pinfo,tree)
+      if mid == 0x18c8 then
+         -- TODO: There is probably a better way to get user_data from CCSDS dissector
+         Dissector.get("cfdp"):call(buffer(11+16):tvb(),pinfo,tree)
+      end
+      
    end
 
    if msg_type_number == 4 then
