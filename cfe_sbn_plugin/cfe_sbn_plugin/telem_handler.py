@@ -30,6 +30,7 @@ class TelemHandler():
             return (key, msg)
         else:
             self._node.get_logger().warn("Don't know how to handle message id " + packet_id)
+            return (packet_id, None)
 
     def get_pkt_id(self, datagram):
         streamid = unpack(">H", datagram[:2])
