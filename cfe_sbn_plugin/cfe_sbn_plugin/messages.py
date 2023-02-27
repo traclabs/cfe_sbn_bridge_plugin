@@ -55,8 +55,8 @@ class SBNMessageHdr():
            + str(self.size) + ',sbn_type=' \
            + str(self.sbn_type) + ', proc_id=' \
            + str(self.proc_id)+', sc_id=' \
-           + str(sc_id)+', msg=' \
-           + msg \
+           + str(self.sc_id)+', msg=' \
+           + str(self.msg) \
            + ')';
 
     ## Serialize to a byte stream
