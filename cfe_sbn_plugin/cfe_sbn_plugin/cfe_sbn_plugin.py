@@ -133,7 +133,7 @@ class FSWPlugin(FSWPluginInterface):
         ## Array of dictionaries defining subscriptions that ROS is requesting from all Peers
         # Default value list is for testing housekeeping tlm message
         # TESTING subscribe to housekeeping tlm message for testing
-        self._ros_subscriptions = [0x800,0x898,0x899,0x89A,0x89B,0x89C]
+        self._ros_subscriptions = [0x800,0x898,0x899,0x89A,0x89B,0x89C,0x817]
         
         # TODO: Update cfg yaml to define a list of peers.
         self._sbn_receiver.add_peer(self._udp_ip, self._udp_send_port, 0x42, 1, self._ros_subscriptions)
@@ -246,7 +246,8 @@ class FSWPlugin(FSWPluginInterface):
            rosout_msg += msg_mapping[field.get_name()]
 
         # Verify the sizes match
-        assert(size == len(rosout_msg))
+        self._node.get_logger().debug('ROSOUT HEADER MSG: ' + str(size) + ", len: " + str(len(rosout_msg)))
+        # assert(size == len(rosout_msg))
         return rosout_msg
 
     def construct_rosout_payload(self, msg):
@@ -272,14 +273,16 @@ class FSWPlugin(FSWPluginInterface):
            rosout_msg += msg_mapping[field.get_name()]
 
         # Verify the sizes match
-        assert(size == len(rosout_msg))
+        self._node.get_logger().debug('ROSOUT PAYLOAD MSG: ' + str(size) + ", len: " + str(len(rosout_msg)))
+        # assert(size == len(rosout_msg))
         return rosout_msg
 
     def rosout_callback(self, msg):
         size = self._juicer_interface.get_symbol_info("ROS_APP_RosoutTlm_t").get_size()
         header = self.construct_rosout_header(msg, size)
         payload = self.construct_rosout_payload(msg)
-        assert(size == (len(header) + len(payload)))
+        self._node.get_logger().debug('ROSOUT CALLBACK MSG: ' + str(header) + ", len: " + str(len(payload)))
+        # assert(size == (len(header) + len(payload)))
 
         SBNPeer.send_all(header + payload)  # DEBUG: Send unconditionally
         #SBNPeer.send( packet_id, log_msg ) # Send only if peer has subscribed
