@@ -88,12 +88,14 @@ function sbn_protocol.dissector(buffer, pinfo, tree)
       local mid = buffer(11,2):int()
       subtree:add(sbn_cfe_msg_id, mid) -- buffer(11, 2))
       
-      Dissector.get("ccsds"):call(buffer(11):tvb(),pinfo,tree)
       if mid == 0x18c8 then
          -- TODO: There is probably a better way to get user_data from CCSDS dissector
+         Dissector.get("brash_ccsds"):call(buffer(11, 16):tvb(),pinfo,tree)
          Dissector.get("cfdp"):call(buffer(11+16):tvb(),pinfo,tree)
+      elseif mid == 0x817 then
+         Dissector.get("brash_ccsds"):call(buffer(11, 16):tvb(),pinfo,tree)
+         Dissector.get("robotsim"):call(buffer(27):tvb(),pinfo,tree)
       end
-      
    end
 
    if msg_type_number == 4 then
