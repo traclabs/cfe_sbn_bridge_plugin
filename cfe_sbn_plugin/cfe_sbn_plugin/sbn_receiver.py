@@ -12,7 +12,7 @@ class SBNReceiver():
         self._node = node
         self._udp_ip = udp_ip
         self._udp_port = udp_port
-        self._timer_period = 0.01
+        self._timer_period = 0.1
         self._tlm_callback = tlm_callback
 
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -28,11 +28,12 @@ class SBNReceiver():
         return SBNPeer.add(self._node, udp_ip, udp_port, sc_id, proc_id, self._sock, ros_subs)
 
     def timer_callback(self):
-        try:
-            data, addr = self._sock.recvfrom(1024)  # buffer size is 1024 bytes
-            self._node.get_logger().debug(str(self.handle_sbn_msg(data)))
-        except socket.error:
-            pass
+        while True:
+            try:
+                data, addr = self._sock.recvfrom(1024)  # buffer size is 1024 bytes
+                self._node.get_logger().debug(str(self.handle_sbn_msg(data)))
+            except socket.error:
+                return
 
 
     ## Parse a raw subscription or unsubscription message
