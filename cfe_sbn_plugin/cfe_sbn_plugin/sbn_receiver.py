@@ -12,7 +12,7 @@ class SBNReceiver():
         self._node = node
         self._udp_ip = udp_ip
         self._udp_port = udp_port
-        self._timer_period = 0.1
+        self._timer_period = 0.01
         self._tlm_callback = tlm_callback
 
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
