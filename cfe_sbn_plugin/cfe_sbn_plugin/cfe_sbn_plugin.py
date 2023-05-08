@@ -9,7 +9,6 @@ from cfe_sbn_plugin.sbn_receiver import SBNReceiver
 from cfe_sbn_plugin.telem_handler import TelemHandler
 from cfe_sbn_plugin.command_handler import CommandHandler
 from cfe_sbn_plugin.sbn_peer import SBNPeer
-
 # from fsw_ros2_bridge.telem_info import TelemInfo
 # from fsw_ros2_bridge.command_info import CommandInfo
 
@@ -30,7 +29,7 @@ class FSWPlugin(FSWPluginInterface):
     def __init__(self, node):
         ## ROS Node pointer
         self._node = node
-        
+
         self._node.get_logger().info("Setting up cFE-SBN bridge plugin")
         # self._routing_service = None
 
@@ -77,7 +76,7 @@ class FSWPlugin(FSWPluginInterface):
         self._rosout_file_max_length = self._node.get_parameter('plugin_params.rosout_file_max_length').get_parameter_value().integer_value
         self._node.declare_parameter("plugin_params.rosout_function_max_length", 32)
         self._rosout_function_max_length = self._node.get_parameter('plugin_params.rosout_function_max_length').get_parameter_value().integer_value
-        
+
         # Create the subscribe/unsubscribe services.
         self._subscribe_srv = self._node.create_service(Subscribe,
                                                         '/cfe_sbn_bridge/subscribe',
@@ -133,14 +132,13 @@ class FSWPlugin(FSWPluginInterface):
         ## Array of dictionaries defining subscriptions that ROS is requesting from all Peers
         # Default value list is for testing housekeeping tlm message
         # TESTING subscribe to housekeeping tlm message for testing
-        self._ros_subscriptions = [0x800,0x898,0x899,0x89A,0x89B,0x89C,0x817]
-        
+        self._ros_subscriptions = [0x800, 0x808, 0x898, 0x899, 0x89A, 0x89B, 0x89C, 0x817]
+
         # TODO: Update cfg yaml to define a list of peers.
         self._sbn_receiver.add_peer(self._udp_ip, self._udp_send_port, 0x42, 1, self._ros_subscriptions)
 
         # Testing.  Subscribe to the /rosout topic to get the rosout messages.  This is on the flight side
         self._subscribe_srv = self._node.create_subscription(Log, '/rosout', self.rosout_callback, 10)
-
 
     def get_telemetry_message_info(self):
         return self._telem_info
@@ -170,40 +168,38 @@ class FSWPlugin(FSWPluginInterface):
         if request.message_id in self._ros_subscriptions:
             self._node.get_logger().warn("Duplicate subscription request for " + request.message_id + " ignored.")
         else:
-            self._ros_subscriptions.append(request.message_id); # Add to list
-            SBNPeer.send_all_subscription_msg(request.message_id); # And send to all Peers immediately
-        
+            self._ros_subscriptions.append(request.message_id)  # Add to list
+            SBNPeer.send_all_subscription_msg(request.message_id)  # And send to all Peers immediately
+
         return response
 
     ## Called on receipt of ROS /cfe_sbn_bridge/unsubscribe
     # @param request.message_id CFE Message ID to unsubscribe to
     def unsubscribe_callback(self, request, response):
         self._node.get_logger().info('Unsubscribe()')
-        SBNPeer.send_all_unsubscription_msg(request.message_id);
-        
-        self._ros_subscriptions.remove(request.message_id);
+        SBNPeer.send_all_unsubscription_msg(request.message_id)
+
+        self._ros_subscriptions.remove(request.message_id)
 
         return response
 
     def trigger_ros_hk_callback(self, request, response):
         self._node.get_logger().info('TriggerROSHk()')
         cfe_message = struct.pack("BBBBBBBB", 0x18, 0x97, 0xC0, 0x00, 0x00, 0x01, 0x00, 0x00)
-        SBNPeer.send_all(cfe_message); # TODO: .send(0x1897, cfe_message))
+        SBNPeer.send_all(cfe_message)  # TODO: .send(0x1897, cfe_message))
         return response
-
-
 
     def convert_rosout_msg_level_to_packet_id(self, l):
         mid = ""
-        if l == 10: # Debug
+        if l == 10:  # Debug
             mid = struct.pack("BB", 0x08, 0x98)
-        elif l == 20: # Info
+        elif l == 20:  # Info
             mid = struct.pack("BB", 0x08, 0x99)
-        elif l == 30: # WARN
+        elif l == 30:  # WARN
             mid = struct.pack("BB", 0x08, 0x9A)
-        elif l == 40: # ERROR
+        elif l == 40:  # ERROR
             mid = struct.pack("BB", 0x08, 0x9B)
-        elif l == 50: # FATAL
+        elif l == 50:  # FATAL
             mid = struct.pack("BB", 0x08, 0x9C)
         else:
             # Unhandled is treated as FATAL
@@ -232,18 +228,18 @@ class FSWPlugin(FSWPluginInterface):
         rosout_header_obj = self._juicer_interface.get_symbol_info("CFE_MSG_TelemetryHeader")
         size = rosout_header_obj.get_size()
 
-        pri_hdr = ( self.convert_rosout_msg_level_to_packet_id(msg.level) + 
+        pri_hdr = (self.convert_rosout_msg_level_to_packet_id(msg.level) +
                     self.convert_rosout_msg_type_to_packet_seq_ctrl() +
                     self.convert_rosout_msg_to_cfe_msg_size(packet_size))
 
-        msg_mapping = { "Msg" : pri_hdr,
-                        "Sec" : self.convert_rosout_secondary_header(msg.stamp.sec, msg.stamp.nanosec),
-                        "Spare" : struct.pack("BBBB", 0, 0, 0, 0) }
+        msg_mapping = {"Msg": pri_hdr,
+                        "Sec": self.convert_rosout_secondary_header(msg.stamp.sec, msg.stamp.nanosec),
+                        "Spare": struct.pack("BBBB", 0, 0, 0, 0)}
 
         # Form the message
         rosout_msg = bytes('', 'utf-8')
         for field in rosout_header_obj.get_fields():
-           rosout_msg += msg_mapping[field.get_name()]
+            rosout_msg += msg_mapping[field.get_name()]
 
         # Verify the sizes match
         self._node.get_logger().debug('ROSOUT HEADER MSG: ' + str(size) + ", len: " + str(len(rosout_msg)))
@@ -253,24 +249,24 @@ class FSWPlugin(FSWPluginInterface):
     def construct_rosout_payload(self, msg):
         rosout_payload_obj = self._juicer_interface.get_symbol_info("ROS_APP_Rosout_Payload_t")
         size = rosout_payload_obj.get_size()
-        msg_mapping = {'sec' : struct.pack(">I", msg.stamp.sec),
-                       'nsec' : struct.pack(">I", msg.stamp.nanosec),
-                       'level' : struct.pack("B", msg.level),
-                       'name_truncated' : struct.pack("?", len(msg.name) > self._rosout_name_max_length),
-                       'name' : struct.pack(str(self._rosout_name_max_length) + "s", bytearray(msg.name[-self._rosout_name_max_length:], 'utf-8')),
-                       'msg_truncated' : struct.pack("?", len(msg.msg) > self._rosout_msg_max_length),
-                       'msg' : struct.pack(str(self._rosout_msg_max_length) + "s", bytearray(msg.msg[-self._rosout_msg_max_length:], 'utf-8')),
-                       'file_truncated' : struct.pack("?", len(msg.file) > self._rosout_file_max_length),
-                       'file' : struct.pack(str(self._rosout_file_max_length) + "s", bytearray(msg.file[-self._rosout_file_max_length:], 'utf-8')),
-                       'function_truncated' : struct.pack("?", len(msg.function) > self._rosout_function_max_length),
-                       'function' : struct.pack(str(self._rosout_function_max_length) + "s", bytearray(msg.function[-self._rosout_function_max_length:], 'utf-8')),
-                       '_spare0' : struct.pack("BBB", 0, 0, 0),
-                       'line' : struct.pack(">I", msg.line) }
+        msg_mapping = {'sec': struct.pack(">I", msg.stamp.sec),
+                       'nsec': struct.pack(">I", msg.stamp.nanosec),
+                       'level': struct.pack("B", msg.level),
+                       'name_truncated': struct.pack("?", len(msg.name) > self._rosout_name_max_length),
+                       'name': struct.pack(str(self._rosout_name_max_length) + "s", bytearray(msg.name[-self._rosout_name_max_length:], 'utf-8')),
+                       'msg_truncated': struct.pack("?", len(msg.msg) > self._rosout_msg_max_length),
+                       'msg': struct.pack(str(self._rosout_msg_max_length) + "s", bytearray(msg.msg[-self._rosout_msg_max_length:], 'utf-8')),
+                       'file_truncated': struct.pack("?", len(msg.file) > self._rosout_file_max_length),
+                       'file': struct.pack(str(self._rosout_file_max_length) + "s", bytearray(msg.file[-self._rosout_file_max_length:], 'utf-8')),
+                       'function_truncated': struct.pack("?", len(msg.function) > self._rosout_function_max_length),
+                       'function': struct.pack(str(self._rosout_function_max_length) + "s", bytearray(msg.function[-self._rosout_function_max_length:], 'utf-8')),
+                       '_spare0': struct.pack("BBB", 0, 0, 0),
+                       'line': struct.pack(">I", msg.line)}
 
         # Form the message
         rosout_msg = bytes('', 'utf-8')
         for field in rosout_payload_obj.get_fields():
-           rosout_msg += msg_mapping[field.get_name()]
+            rosout_msg += msg_mapping[field.get_name()]
 
         # Verify the sizes match
         self._node.get_logger().debug('ROSOUT PAYLOAD MSG: ' + str(size) + ", len: " + str(len(rosout_msg)))
@@ -292,7 +288,7 @@ class FSWPlugin(FSWPluginInterface):
         self._node.get_logger().info('Handling cmd ' + key_name)
         cmd_ids = self._command_dict[key_name]
         packet = self._juicer_interface.parse_command(command_info, message, cmd_ids['cfe_mid'], cmd_ids['cmd_code'])
-        SBNPeer.send_all(packet); # TODO: replace with send(packet_id,packet)
+        SBNPeer.send_all(packet)  # TODO: replace with send(packet_id,packet)
         self._node.get_logger().info('Command ' + ros_name + ' sent.')
 
     ## Message handler callback

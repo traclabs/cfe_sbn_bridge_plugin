@@ -2,28 +2,34 @@
 
 import struct
 
+
 ### Utility functions
 def read_half_word(msg):
     (hw, ) = struct.unpack(">H", msg[0:2])
     return (hw, msg[2:])
 
+
 def read_full_word(msg):
     (fw, ) = struct.unpack(">L", msg[0:4])
     return (fw, msg[4:])
 
+
 def read_bytes(msg, num_bytes):
     bs = msg[0:num_bytes]
     return (bs, msg[num_bytes:])
+
 
 def write_half_word(hw, msg):
     bs = struct.pack(">H", hw)
     msg.extend(bs)
     return (msg)
 
+
 def write_full_word(fw, msg):
     bs = struct.pack(">L", fw)
     msg.extend(bs)
     return (msg)
+
 
 def write_bytes(values, msg):
     bs = []
@@ -32,6 +38,7 @@ def write_bytes(values, msg):
         bs.extend(b)
     msg.extend(bs)
     return (msg)
+
 
 ## SBN Message Header
 class SBNMessageHdr():
@@ -54,10 +61,10 @@ class SBNMessageHdr():
         return 'SBNMessageHdr(size=' \
            + str(self.size) + ',sbn_type=' \
            + str(self.sbn_type) + ', proc_id=' \
-           + str(self.proc_id)+', sc_id=' \
-           + str(self.sc_id)+', msg=' \
+           + str(self.proc_id) + ', sc_id=' \
+           + str(self.sc_id) + ', msg=' \
            + str(self.msg) \
-           + ')';
+           + ')'
 
     ## Serialize to a byte stream
     # @param bytes If true, return values as bytes, otherwise returns an array of integer (byte-like) values.
@@ -70,7 +77,7 @@ class SBNMessageHdr():
         if (self.msg):
             # If self.msg is array
             msg.extend(self.msg)
-            
+
             # TODO: Support case where msg is already bytes
             # if (isinstance(self.msg, bytes): return  TODO: How to combine bytes(msg) with self.msg in this case?
             #   Or does msg.extend also work if input is already a bytes object? Alt: + to concatenate, or .join operator?
@@ -87,13 +94,13 @@ class SBNMessageHdr():
         if len(msg) >= 11:
             message_size, msg = read_half_word(msg)
             message_type, msg = read_bytes(msg, 1)
-            processorID, msg =  read_full_word(msg)
+            processorID, msg = read_full_word(msg)
             spacecraftID, msg = read_full_word(msg)
-            return SBNMessageHdr( message_size,
+            return SBNMessageHdr(message_size,
                                   int.from_bytes(message_type, byteorder='big'),
                                   processorID,
                                   spacecraftID,
-                                  msg );
+                                  msg)
         else:
             return None
 
@@ -118,11 +125,10 @@ class SBNMessageHdr():
         elif self.type == 0xA2:
             msg_type_name = "SBN_UDP_DISCONN_MSG"
 
-        return msg_type_name        
-        
+        return msg_type_name
+
 ## CCSDS Header
 # TODO
 # constructor accepts binary arrray or integer mid
 # .seq_count
 # .raw       # Raw packet that a deserialize structure came from. Not set for new packets being built (until serialize is first called).  This is a cached value and may not represent current state of class if attributes have been updated since construction or last serialization
-

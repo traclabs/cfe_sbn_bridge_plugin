@@ -27,7 +27,6 @@ class CFEConsoleTest(Node):
         self._debug_timer = self.create_timer(self._debug_period, self.debug_callback)
         # self._fatal_timer = self.create_timer(self._fatal_period, self.fatal_callback)
 
-
     def info_callback(self):
         self.get_logger().info("CFEConsoleTest() -- INFO tick")
 
@@ -42,7 +41,6 @@ class CFEConsoleTest(Node):
 
     def fatal_callback(self):
         self.get_logger().fatal("CFEConsoleTest() -- FATAL tick")
-
 
 
 def main(args=None):
