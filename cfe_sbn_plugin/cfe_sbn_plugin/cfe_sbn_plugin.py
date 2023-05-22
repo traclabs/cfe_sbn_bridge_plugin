@@ -129,16 +129,28 @@ class FSWPlugin(FSWPluginInterface):
 
         self._sbn_receiver = SBNReceiver(self._node, self._udp_ip, self._udp_receive_port, self.telem_callback)
 
-        ## Array of dictionaries defining subscriptions that ROS is requesting from all Peers
-        # Default value list is for testing housekeeping tlm message
-        # TESTING subscribe to housekeeping tlm message for testing
-        self._ros_subscriptions = [0x800, 0x808, 0x898, 0x899, 0x89A, 0x89B, 0x89C, 0x817]
+        self._subscription_scanning_timer_period = 0.5
+        self._subscription_scanning_timer = self._node.create_timer(self._subscription_scanning_timer_period, 
+                                                                    self.subscription_scanning_timer_callback)
 
         # TODO: Update cfg yaml to define a list of peers.
-        self._sbn_receiver.add_peer(self._udp_ip, self._udp_send_port, 0x42, 1, self._ros_subscriptions)
+        self._sbn_receiver.add_peer(self._udp_ip, self._udp_send_port, 0x42, 1)
 
         # Testing.  Subscribe to the /rosout topic to get the rosout messages.  This is on the flight side
         self._subscribe_srv = self._node.create_subscription(Log, '/rosout', self.rosout_callback, 10)
+
+    def subscription_scanning_timer_callback(self):
+        # self._node.get_logger().info('Subscription Timer Scanner()')
+        for k in self._telemetry_dict.keys():
+            topic = self._telemetry_dict[k]['topic_name']
+            info = self._node.get_subscriptions_info_by_topic(topic)
+            if len(info) > 0:
+                # This means that a local node is subscribed to this topic.
+                SBNPeer.send_all_subscription_msg(int(self._telemetry_dict[k]['cfe_mid'], 16))
+            else:
+                # No local node is subscribed to this topic.
+                SBNPeer.send_all_unsubscription_msg(int(self._telemetry_dict[k]['cfe_mid'], 16))
+
 
     def get_telemetry_message_info(self):
         return self._telem_info
@@ -164,13 +176,7 @@ class FSWPlugin(FSWPluginInterface):
     # @param request.message_id CFE Message ID to subscribe to
     def subscribe_callback(self, request, response):
         self._node.get_logger().info('Subscribe()')
-
-        if request.message_id in self._ros_subscriptions:
-            self._node.get_logger().warn("Duplicate subscription request for " + request.message_id + " ignored.")
-        else:
-            self._ros_subscriptions.append(request.message_id)  # Add to list
-            SBNPeer.send_all_subscription_msg(request.message_id)  # And send to all Peers immediately
-
+        SBNPeer.send_all_subscription_msg(request.message_id)
         return response
 
     ## Called on receipt of ROS /cfe_sbn_bridge/unsubscribe
@@ -178,9 +184,6 @@ class FSWPlugin(FSWPluginInterface):
     def unsubscribe_callback(self, request, response):
         self._node.get_logger().info('Unsubscribe()')
         SBNPeer.send_all_unsubscription_msg(request.message_id)
-
-        self._ros_subscriptions.remove(request.message_id)
-
         return response
 
     def trigger_ros_hk_callback(self, request, response):
@@ -297,5 +300,5 @@ class FSWPlugin(FSWPluginInterface):
     def telem_callback(self, msg, peer):
         # handle telemetry from cFE
         (key, msg) = self._telem_handler.handle_packet(msg)
-        self._node.get_logger().info('Handling telemetry message for ' + key)
+        # self._node.get_logger().info('Handling telemetry message for ' + key)
         self._recv_map[key] = msg
