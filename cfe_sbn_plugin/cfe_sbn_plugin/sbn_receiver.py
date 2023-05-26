@@ -25,8 +25,8 @@ class SBNReceiver():
 
     ## Register a Peer (formerly sender)
     # Note: Peer requires a reference to receiver, hence the need for this wrapper.
-    def add_peer(self, udp_ip, udp_port, sc_id, proc_id, ros_subs):
-        return SBNPeer.add(self._node, udp_ip, udp_port, sc_id, proc_id, self._sock, ros_subs)
+    def add_peer(self, udp_ip, udp_port, sc_id, proc_id):
+        return SBNPeer.add(self._node, udp_ip, udp_port, sc_id, proc_id, self._sock)
 
     def timer_callback(self):
         while True:

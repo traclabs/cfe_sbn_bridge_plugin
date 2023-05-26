@@ -21,7 +21,7 @@ class TelemHandler():
         packet_id = self.get_pkt_id(datagram)
         if packet_id in self._tlm_map:
             ros_name = self._tlm_map[packet_id]
-            self._node.get_logger().info("Received packet for " + ros_name)
+            # self._node.get_logger().info("Received packet for " + ros_name)
             MsgType = getattr(importlib.import_module(self._msg_pkg + ".msg"), ros_name)
             msg = MsgType()
             setattr(msg, "seq", self.get_seq_count(datagram))

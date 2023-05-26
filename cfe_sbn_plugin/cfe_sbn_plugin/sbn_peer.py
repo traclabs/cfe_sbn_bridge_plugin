@@ -12,7 +12,7 @@ class SBNPeer():
 
     ## Add a new Peer definition
     @classmethod
-    def add(cls, node, udp_ip, udp_port, sc_id, proc_id, sock, ros_subs):
+    def add(cls, node, udp_ip, udp_port, sc_id, proc_id, sock):
 
         peer = cls.find(sc_id, proc_id)
         if peer:
@@ -22,7 +22,7 @@ class SBNPeer():
             peer.udp_ip = udp_ip
             peer.udp_port = udp_port
         else:
-            peer = SBNPeer(node, udp_ip, udp_port, sc_id, proc_id, sock, ros_subs)
+            peer = SBNPeer(node, udp_ip, udp_port, sc_id, proc_id, sock)
             cls.peers.append(peer)
         return peer
 
@@ -51,15 +51,21 @@ class SBNPeer():
     @classmethod
     def send_all_subscription_msg(cls, message_id):
         for peer in cls.peers:
-            peer.send_subscription_msg(message_id)
+            if message_id not in peer._ros_subscriptions:
+                peer._node.get_logger().info('Subscribing to MID 0x%04x over SBN' % message_id)
+                peer._ros_subscriptions.append(message_id)
+                peer.send_subscription_msg(message_id)
 
         ## Send a unsubscription request to all peers
     @classmethod
     def send_all_unsubscription_msg(cls, message_id):
         for peer in cls.peers:
-            peer.send_unsubscription_msg(message_id)
+            if message_id in peer._ros_subscriptions:
+                peer._node.get_logger().info('Unsubscribing from MID 0x%04x over SBN' % message_id)
+                peer._ros_subscriptions.remove(message_id)
+                peer.send_unsubscription_msg(message_id)
 
-    def __init__(self, node, udp_ip, udp_port, sc_id, proc_id, sock, ros_subscriptions={}):
+    def __init__(self, node, udp_ip, udp_port, sc_id, proc_id, sock):
         self._node = node
         self._udp_ip = udp_ip
         self._udp_port = udp_port
@@ -91,7 +97,7 @@ class SBNPeer():
         # list across all peers, or may utilize distinct lists if
         # desired. CFE_SBN natively does not natively support
         # subscribing from a particular peer in FSW
-        self._ros_subscriptions = ros_subscriptions
+        self._ros_subscriptions = []
 
         self._sock = sock  # We reuse common socket so reply port/address is correct
 
