@@ -130,7 +130,7 @@ class FSWPlugin(FSWPluginInterface):
         self._sbn_receiver = SBNReceiver(self._node, self._udp_ip, self._udp_receive_port, self.telem_callback)
 
         self._subscription_scanning_timer_period = 0.5
-        self._subscription_scanning_timer = self._node.create_timer(self._subscription_scanning_timer_period, 
+        self._subscription_scanning_timer = self._node.create_timer(self._subscription_scanning_timer_period,
                                                                     self.subscription_scanning_timer_callback)
 
         # TODO: Update cfg yaml to define a list of peers.
@@ -151,17 +151,18 @@ class FSWPlugin(FSWPluginInterface):
                 # No local node is subscribed to this topic.
                 SBNPeer.send_all_unsubscription_msg(int(self._telemetry_dict[k]['cfe_mid'], 16))
 
-
     def get_telemetry_message_info(self):
         return self._telem_info
 
     def get_command_message_info(self):
         return self._command_info
 
-    def get_latest_data(self, key):
+    def get_buffered_data(self, key, clear):
         retval = None
         if key in self._recv_map:
             retval = self._recv_map[key]
+        if clear and (key in self._recv_map):
+            del self._recv_map[key]
         return retval
 
     def create_ros_msgs(self, msg_dir):
@@ -301,4 +302,10 @@ class FSWPlugin(FSWPluginInterface):
         # handle telemetry from cFE
         (key, msg) = self._telem_handler.handle_packet(msg)
         # self._node.get_logger().info('Handling telemetry message for ' + key)
-        self._recv_map[key] = msg
+
+        # check to see if we have received telem data for this key. if not create a new list
+        if key not in self._recv_map:
+            self._recv_map[key] = []
+
+        # append latest message to the list for this key
+        self._recv_map[key].append(msg)
