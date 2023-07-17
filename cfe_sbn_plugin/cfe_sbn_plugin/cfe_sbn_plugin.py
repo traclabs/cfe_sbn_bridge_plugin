@@ -289,11 +289,9 @@ class FSWPlugin(FSWPluginInterface):
 
     def command_callback(self, command_info, message):
         key_name = command_info.get_key()
-        self._node.get_logger().info('Handling cmd ' + key_name)
         cmd_ids = self._command_dict[key_name]
         packet = self._juicer_interface.parse_command(command_info, message, cmd_ids['cfe_mid'], cmd_ids['cmd_code'])
-        SBNPeer.send_all(packet)  # TODO: replace with send(packet_id,packet)
-        self._node.get_logger().info('Command ' + ros_name + ' sent.')
+        SBNPeer.send( int(cmd_ids['cfe_mid'], 16), packet )
 
     ## Message handler callback
     # @param msg Parse a received cFE CCSDS message
