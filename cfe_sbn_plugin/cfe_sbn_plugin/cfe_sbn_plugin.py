@@ -157,7 +157,7 @@ class FSWPlugin(FSWPluginInterface):
     def get_command_message_info(self):
         return self._command_info
 
-    def get_buffered_data(self, key, clear):
+    def get_buffered_data(self, key, clear=True):
         retval = None
         if key in self._recv_map:
             retval = self._recv_map[key]
