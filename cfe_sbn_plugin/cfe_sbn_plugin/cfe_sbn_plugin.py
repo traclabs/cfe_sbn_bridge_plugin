@@ -116,7 +116,13 @@ class FSWPlugin(FSWPluginInterface):
         for ci in self._command_info:
             key = ci.get_key()
             cmd_ids = self._command_dict[key]
-            msg_size = symbol_name_map[ci.get_msg_type()].get_size()
+            mtype = ci.get_msg_type()
+            if mtype:
+                msg_size = symbol_name_map[mtype].get_size()
+            else:
+                # No type implies variable-size binary pkt
+                self._node.get_logger().debug("No type defined for " + key) 
+
             ch = CommandHandler(self._node, ci, self.command_callback, int(cmd_ids['cfe_mid'], 16), cmd_ids['cmd_code'], msg_size)
             ci.set_callback_func(ch.process_callback)
 
@@ -287,12 +293,13 @@ class FSWPlugin(FSWPluginInterface):
         SBNPeer.send_all(header + payload)  # DEBUG: Send unconditionally
         #SBNPeer.send( packet_id, log_msg ) # Send only if peer has subscribed
 
+    ## Handle receipt of ROS Topic for publishing on SBN
     def command_callback(self, command_info, message):
         key_name = command_info.get_key()
         cmd_ids = self._command_dict[key_name]
         packet = self._juicer_interface.parse_command(command_info, message, cmd_ids['cfe_mid'], cmd_ids['cmd_code'])
         SBNPeer.send( int(cmd_ids['cfe_mid'], 16), packet )
-
+        
     ## Message handler callback
     # @param msg Parse a received cFE CCSDS message
     # @param peer SBNPeer reference to originating peer (ie: for logging purposes)

@@ -27,13 +27,20 @@ class TelemHandler():
             
             if not ros_name:
                 # Packet is defined in configuration, but no structure was specified, implying we should use default binary encoding
-                self._node._logger.warn("Received packet for pid without struct name! Handling Under testing: " + str(packet_id))
+                mid = int(packet_id,0)
+                self._node._logger.warn(f"Received packet for pid without struct name! Handling as binary: {str(packet_id)}={mid}")
 
                 #@ Create Generic Binary Packet containing payload
                 # ROS doesn't seem to allow a msg definition of a simple bytes array, so we must split it
                 #  into an array of individual byte objects (byte[])
                 # VERIFY: Is this correct and/or the most efficient way to do this?
-                tmp_data = datagram[16:]
+                if (mid & 0x1000): # Command
+                    self._node._logger.debug(f"CMD hdr decode of {mid}")
+                    tmp_data = datagram[8:]
+                else: # Telemetry
+                    self._node._logger.debug(f"TLM hdr decode of {mid}")
+                    tmp_data = datagram[16:]
+                    
                 msg_data = [i.to_bytes(1, sys.byteorder) for i in tmp_data]
                 msg = BinaryPktPayload(data=msg_data)
             else:
