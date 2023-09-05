@@ -46,11 +46,14 @@ install(DIRECTORY
   DESTINATION share/${PROJECT_NAME}/
 )
 
-# if(BUILD_TESTING)
-#   find_package(ament_cmake_ros REQUIRED)
-#   ament_add_ros_isolated_pytest_test(
-#     test_single_launch_test test/single_launch_test.py
-#     TIMEOUT 30)
-# endif()
+if(BUILD_TESTING)
+  find_package(ament_cmake_ros REQUIRED)
+  ament_add_ros_isolated_pytest_test(
+    test_cfe_launch_test test/cfe_launch_test.py
+    TIMEOUT 30)
+  ament_add_ros_isolated_pytest_test(
+    test_gsw_bridge_launch_test test/gsw_bridge_launch_test.py
+    TIMEOUT 30)
+endif()
 
 ament_package()
