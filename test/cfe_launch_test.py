@@ -30,7 +30,11 @@ import pytest
 def generate_test_description():
     TEST_PROC_PATH = os.path.join(
         os.environ.get("CFE_ROOT"),
-        'build/exe/cpu1',
+        'build/exe/cpu1'
+    )
+
+    TEST_PROC_EXE = os.path.join(
+        TEST_PROC_PATH,
         'core-cpu1'
     )
 
@@ -39,7 +43,8 @@ def generate_test_description():
     proc_env['PYTHONUNBUFFERED'] = '1'
 
     dut_process = launch.actions.ExecuteProcess(
-        cmd=[TEST_PROC_PATH],
+        cmd=[TEST_PROC_EXE],
+        cwd=TEST_PROC_PATH,
         env=proc_env, output='screen'
     )
 
