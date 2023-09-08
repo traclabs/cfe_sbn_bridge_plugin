@@ -106,7 +106,7 @@ class SBNPeer():
     ## Timer validates received heartbeats and transmits when appropriate
     def timer_callback(self):
         if self._connected == False:
-            self._subscriptions = {} # When we are not connected, we have no subscriptions from peers.
+            self._subscriptions = {}  # When we are not connected, we have no subscriptions from peers.
             return  # No heartbeat processing needed if !connected
 
         # If we haven't received a heartbeat in a while, we should
