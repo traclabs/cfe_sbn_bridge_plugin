@@ -15,12 +15,12 @@ class SBNReceiver():
         self._udp_port = udp_port
         self._timer_period = 0.1
         self._tlm_callback = tlm_callback
+        self._recv_buff_size = 4096
 
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._sock.bind((self._udp_ip, self._udp_port))
-
-        # Original: timer based read, with added non-blocking logic
         self._sock.setblocking(False)
+
         self._timer = self._node.create_timer(self._timer_period, self.timer_callback)
 
     ## Register a Peer (formerly sender)
@@ -31,7 +31,13 @@ class SBNReceiver():
     def timer_callback(self):
         while True:
             try:
-                data, addr = self._sock.recvfrom(1024)  # buffer size is 1024 bytes
+                # receive message
+                data, addr = self._sock.recvfrom(self._recv_buff_size)
+
+                # ignore data if not long enough (doesn't contain header)
+                if len(data) < 6:
+                    return
+
                 self._node.get_logger().debug(str(self.handle_sbn_msg(data)))
             except socket.error:
                 return
