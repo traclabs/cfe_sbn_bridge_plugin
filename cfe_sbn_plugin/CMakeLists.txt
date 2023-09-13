@@ -54,6 +54,9 @@ if(BUILD_TESTING)
   ament_add_ros_isolated_pytest_test(
     test_gsw_bridge_launch_test test/gsw_bridge_launch_test.py
     TIMEOUT 30)
+  ament_add_ros_isolated_pytest_test(
+    test_gsw_bridge_telemetry_test test/gsw_bridge_telemetry_test.py
+    TIMEOUT 30)
 endif()
 
 ament_package()
