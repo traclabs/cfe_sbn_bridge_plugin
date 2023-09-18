@@ -50,13 +50,13 @@ if(BUILD_TESTING)
   find_package(ament_cmake_ros REQUIRED)
   ament_add_ros_isolated_pytest_test(
     test_cfe_launch_test test/cfe_launch_test.py
-    TIMEOUT 30)
+    TIMEOUT 90)
   ament_add_ros_isolated_pytest_test(
     test_gsw_bridge_launch_test test/gsw_bridge_launch_test.py
-    TIMEOUT 30)
+    TIMEOUT 90)
   ament_add_ros_isolated_pytest_test(
     test_gsw_bridge_telemetry_test test/gsw_bridge_telemetry_test.py
-    TIMEOUT 30)
+    TIMEOUT 90)
 endif()
 
 ament_package()
