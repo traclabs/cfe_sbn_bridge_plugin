@@ -163,7 +163,7 @@ class FSWPlugin(FSWPluginInterface):
     def get_command_message_info(self):
         return self._command_info
 
-    def get_buffered_data(self, key, clear):
+    def get_buffered_data(self, key, clear=True):
         retval = None
         if key in self._recv_map:
             retval = self._recv_map[key]
@@ -298,8 +298,9 @@ class FSWPlugin(FSWPluginInterface):
         key_name = command_info.get_key()
         cmd_ids = self._command_dict[key_name]
         packet = self._juicer_interface.parse_command(command_info, message, cmd_ids['cfe_mid'], cmd_ids['cmd_code'])
+
         SBNPeer.send( int(cmd_ids['cfe_mid'], 16), packet )
-        
+
     ## Message handler callback
     # @param msg Parse a received cFE CCSDS message
     # @param peer SBNPeer reference to originating peer (ie: for logging purposes)
