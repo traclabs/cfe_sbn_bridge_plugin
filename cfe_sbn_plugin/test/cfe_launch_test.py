@@ -15,7 +15,6 @@
 import os
 import unittest
 
-
 import launch
 import launch.actions
 
@@ -56,11 +55,9 @@ def generate_test_description():
     ]), {'dut_process': dut_process}
 
 
-
 class TestGoodCfeStartup(unittest.TestCase):
     def test_wait_for_msg(self, proc_output):
         proc_output.assertWaitFor('EVS Port1 66/1/CFE_TIME 21: Stop FLYWHEEL', timeout=30, stream='stdout')
-
 
 
 @launch_testing.post_shutdown_test()

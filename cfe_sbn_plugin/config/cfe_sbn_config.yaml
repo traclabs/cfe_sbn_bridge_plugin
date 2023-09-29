@@ -1,6 +1,7 @@
 cfe_sbn_bridge:
   ros__parameters:
     plugin_name: cfe_sbn_plugin.cfe_sbn_plugin
+    namespace: /sbn
     plugin_params:
       cfs_root: ~/code/TL_cFS
       msg_pkg: cfe_msgs
