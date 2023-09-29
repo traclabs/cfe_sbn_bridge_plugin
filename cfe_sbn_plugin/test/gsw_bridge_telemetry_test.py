@@ -30,6 +30,7 @@ import rclpy
 from cfe_msgs.msg import TOLABEnableOutputCmdt
 from cfe_msgs.msg import CFEESHousekeepingTlm
 
+
 @pytest.mark.launch_test
 def generate_test_description():
     TEST_PROC_PATH = os.path.join(
@@ -63,7 +64,8 @@ def generate_test_description():
 
         # Start tests right away - no need to wait for anything
         launch_testing.actions.ReadyToTest(),
-    ]), {'cfe_process': cfe_process, 'gsw_bridge_process' : gsw_bridge_process}
+    ]), {'cfe_process': cfe_process, 'gsw_bridge_process': gsw_bridge_process}
+
 
 class TestEnableTOOutput(unittest.TestCase):
     @classmethod
@@ -75,7 +77,7 @@ class TestEnableTOOutput(unittest.TestCase):
     def tearDownClass(cls):
         # Shutdown the ROS context
         rclpy.shutdown()
-    
+
     def setUp(self):
         # Create a ROS node for tests
         self.node = rclpy.create_node('test_enable_to_output_node')
@@ -93,7 +95,7 @@ class TestEnableTOOutput(unittest.TestCase):
             TOLABEnableOutputCmdt,
             '/groundsystem/to_lab_enable_output_cmd',
             10)
-        
+
         msg = TOLABEnableOutputCmdt()
         msg.payload.dest_ip = '127.0.0.1'
         pub.publish(msg)
@@ -142,6 +144,3 @@ class TestEnableTOOutput(unittest.TestCase):
 #    def test_cfe_shutdown(self, proc_output, cfe_process):
 #        with assertSequentialStdout(proc_output, cfe_process) as cm:
 #            cm.assertInStdout('CFE_PSP: Shutdown initiated - Exiting cFE')
-
-
-

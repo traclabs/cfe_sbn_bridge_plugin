@@ -15,7 +15,6 @@
 import os
 import unittest
 
-
 import launch
 import launch.actions
 
@@ -58,14 +57,12 @@ def generate_test_description():
 
         # Start tests right away - no need to wait for anything
         launch_testing.actions.ReadyToTest(),
-    ]), {'dut_process': dut_process, 'gsw_bridge_process' : gsw_bridge_process}
-
+    ]), {'dut_process': dut_process, 'gsw_bridge_process': gsw_bridge_process}
 
 
 class TestGoodCfeStartup(unittest.TestCase):
     def test_wait_for_msg(self, proc_output):
         proc_output.assertWaitFor('EVS Port1 66/1/CFE_TIME 21: Stop FLYWHEEL', timeout=90, stream='stdout')
-
 
 
 class TestGoodGswBridgeStartup(unittest.TestCase):
@@ -83,6 +80,3 @@ class TestGoodGswBridgeStartup(unittest.TestCase):
 #    def test_cfe_shutdown(self, proc_output, dut_process):
 #        with assertSequentialStdout(proc_output, dut_process) as cm:
 #            cm.assertInStdout('CFE_PSP: Shutdown initiated - Exiting cFE')
-
-
-
