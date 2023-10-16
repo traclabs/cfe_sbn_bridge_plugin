@@ -70,6 +70,8 @@ class SBNPeer():
         self._udp_ip = udp_ip
         self._udp_port = udp_port
 
+        self._node.get_logger().info(f" Adding peer at {udp_ip}:{udp_port} for {sc_id}, {proc_id}")
+
         ## Local Spacecraft Identifier
         self._spacecraft_id = self._node.get_parameter('plugin_params.spacecraft_id').get_parameter_value().integer_value
 

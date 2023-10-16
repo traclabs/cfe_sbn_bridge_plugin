@@ -2,11 +2,9 @@ cfe_sbn_bridge:
   ros__parameters:
     plugin_name: cfe_sbn_plugin.cfe_sbn_plugin
     plugin_params:
-      cfs_root: ~/code/TL_cFS
       msg_pkg: cfe_msgs
       udp_receive_port: 2236
-      udp_send_port: 2234
-      udp_ip: '127.0.0.1'
+      udp_receive_ip: '0.0.0.0'
       spacecraft_id: 66
       processor_id: 3
       epoch_delta: 315532800
@@ -14,4 +12,5 @@ cfe_sbn_bridge:
       rosout_msg_max_length: 128
       rosout_file_max_length: 64
       rosout_function_max_length: 32
-
+      peer_ip: "127.0.0.1"
+      peer_port: 2234
