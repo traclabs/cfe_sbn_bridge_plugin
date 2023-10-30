@@ -32,10 +32,6 @@ ament_export_dependencies(
 
 ament_python_install_package(${PROJECT_NAME})
 
-install(PROGRAMS
-  cfe_sbn_util/cfe_console_test.py
-  DESTINATION lib/${PROJECT_NAME})
-
 install(DIRECTORY
   resource launch
   DESTINATION share/${PROJECT_NAME}/
