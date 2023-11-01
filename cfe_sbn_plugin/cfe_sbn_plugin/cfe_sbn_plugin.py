@@ -33,6 +33,9 @@ class FSWPlugin(FSWPluginInterface):
         self._node.get_logger().info("Setting up cFE-SBN bridge plugin")
         # self._routing_service = None
 
+        self._namespace = self._node.get_parameter('namespace'). \
+            get_parameter_value().string_value
+
         self._node.declare_parameter('plugin_params.cfs_root', '~/code/cFS')
         self._cfs_root = self._node.get_parameter('plugin_params.cfs_root').get_parameter_value(). \
             string_value
@@ -46,12 +49,12 @@ class FSWPlugin(FSWPluginInterface):
         self._node.get_logger().info("  using msg_pkg: " + self._msg_pkg)
         self._cfs_msgs_dir = get_package_share_directory(self._msg_pkg)
 
-        self._node.declare_parameter('plugin_params.udp_receive_port', 1234)
+        self._node.declare_parameter('plugin_params.udp_receive_port', 2236)
         self._udp_receive_port = self._node.get_parameter('plugin_params.udp_receive_port'). \
             get_parameter_value().integer_value
         self._node.get_logger().info("  using udp_receive_port: " + str(self._udp_receive_port))
 
-        self._node.declare_parameter('plugin_params.udp_send_port', 1235)
+        self._node.declare_parameter('plugin_params.udp_send_port', 2234)
         self._udp_send_port = self._node.get_parameter('plugin_params.udp_send_port'). \
             get_parameter_value().integer_value
         self._node.get_logger().info("  using udp_send_port: " + str(self._udp_send_port))
@@ -96,8 +99,8 @@ class FSWPlugin(FSWPluginInterface):
         self._telem_info = self._juicer_interface.get_telemetry_message_info()
         self._command_info = self._juicer_interface.get_command_message_info()
 
-        command_params = ["structure", "cfe_mid", "cmd_code", "topic_name", "port"]
-        telemetry_params = ["structure", "cfe_mid", "topic_name", "port"]
+        command_params = ["structure", "cfe_mid", "cmd_code", "topic_name"]
+        telemetry_params = ["structure", "cfe_mid", "topic_name"]
         cfe_config = ParseCFEConfig(self._node, command_params, telemetry_params)
         cfe_config.print_commands()
         cfe_config.print_telemetry()
@@ -149,6 +152,10 @@ class FSWPlugin(FSWPluginInterface):
         # self._node.get_logger().info('Subscription Timer Scanner()')
         for k in self._telemetry_dict.keys():
             topic = self._telemetry_dict[k]['topic_name']
+
+            if not topic.startswith("/"):
+                topic = self._namespace + "/" + topic
+
             info = self._node.get_subscriptions_info_by_topic(topic)
             if len(info) > 0:
                 # This means that a local node is subscribed to this topic.
