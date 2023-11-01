@@ -13,7 +13,7 @@ def generate_launch_description():
         )
 
     sbn_config = os.path.join(
-        get_package_share_directory('cfe_sbn_plugin'),
+        get_package_share_directory('juicer_util'),
         'config',
         'cfe_plugin_config.yaml'
         )
