@@ -1,6 +1,7 @@
 cfe_sbn_bridge:
   ros__parameters:
     plugin_name: cfe_sbn_plugin.cfe_sbn_plugin
+    namespace: /flightsystem
     plugin_params:
       msg_pkg: cfe_msgs
       udp_receive_port: 2236

@@ -35,22 +35,9 @@ ament_export_dependencies(
 
 ament_python_install_package(${PROJECT_NAME})
 
-install(PROGRAMS
-  cfe_sbn_plugin/cfe_sbn_plugin.py
-  cfe_sbn_plugin/sbn_peer.py
-  cfe_sbn_plugin/sbn_receiver.py
-  DESTINATION lib/${PROJECT_NAME})
-
 install(DIRECTORY
   config resource launch
   DESTINATION share/${PROJECT_NAME}/
 )
-
-# if(BUILD_TESTING)
-#   find_package(ament_cmake_ros REQUIRED)
-#   ament_add_ros_isolated_pytest_test(
-#     test_single_launch_test test/single_launch_test.py
-#     TIMEOUT 30)
-# endif()
 
 ament_package()
