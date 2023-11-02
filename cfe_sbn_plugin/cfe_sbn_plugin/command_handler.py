@@ -1,4 +1,4 @@
-
+from cfe_msgs.msg import CFEMSGCommandHeader
 
 class CommandHandler():
     def __init__(self, node, cmd_info, callback, mid, cid, size):
