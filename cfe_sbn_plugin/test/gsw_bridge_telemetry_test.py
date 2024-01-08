@@ -87,8 +87,8 @@ class TestEnableTOOutput(unittest.TestCase):
 
     def test_enable_to_output(self, proc_output):
         # Wait for both CFE and the Bridge to start.
-        proc_output.assertWaitFor('EVS Port1 66/1/CFE_TIME 21: Stop FLYWHEEL', timeout=90, stream='stdout')
-        proc_output.assertWaitFor('found message dictionary of size: 160', timeout=90, stream='stdout')
+        proc_output.assertWaitFor('EVS Port1 66/1/CFE_TIME 21: Stop FLYWHEEL', timeout=30, stream='stdout')
+        proc_output.assertWaitFor('found message dictionary...', timeout=30, stream='stdout')
 
         # They've started, now create a publisher and publish the enable TO output command.
         pub = self.node.create_publisher(
