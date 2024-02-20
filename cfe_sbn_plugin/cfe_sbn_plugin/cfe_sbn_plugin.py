@@ -48,42 +48,30 @@ class FSWPlugin(FSWPluginInterface):
         self._node.get_logger().info("  using udp_receive_port: " + str(self._udp_receive_port))
 
         self._node.declare_parameter('plugin_params.peer_port', 2234)
-        self._peer_port = os.environ.get("FSW_SBN_PORT")
-        if not self._peer_port:
-            self._peer_port = self._node.get_parameter('plugin_params.peer_port'). \
+        self._peer_port = self._node.get_parameter('plugin_params.peer_port'). \
                 get_parameter_value().integer_value
-        else:
-            self._peer_port = int(self._peer_port)
         self._node.get_logger().info("  using peer_port: " + str(self._peer_port))
 
         # udp_ip_desc = ParameterDescriptor(description="IP Address to bind on for receiving traffic")
         self._node.declare_parameter('plugin_params.udp_receive_ip', '0.0.0.0')#,udp_ip_desc)
-        self._udp_ip = os.environ.get("SBN_BIND_IP")
-        if not self._udp_ip:
-            self._udp_ip = self._node.get_parameter('plugin_params.udp_receive_ip').get_parameter_value(). \
+        self._udp_ip = self._node.get_parameter('plugin_params.udp_receive_ip').get_parameter_value(). \
                 string_value
         self._node.get_logger().info("  using udp_receive_ip: " + self._udp_ip)
 
         # TODO: Consider syntax that permits defining multiple SBN peers
         # peer_udp_ip_desc = ParameterDescriptor(description="IP Address of primary SBN peer")
         self._node.declare_parameter('plugin_params.peer_ip', '127.0.0.1')#,udp_ip_desc)
-        self._peer_udp_ip = os.environ.get("FSW_IP") # This ENV is used for both SBN and GSW
-        if not self._peer_udp_ip:
-            self._peer_udp_ip = self._node.get_parameter('plugin_params.peer_ip').get_parameter_value(). \
+        self._peer_udp_ip = self._node.get_parameter('plugin_params.peer_ip').get_parameter_value(). \
                 string_value
         self._node.get_logger().info("  using peer_ip: " + self._peer_udp_ip)
         
         self._node.declare_parameter('plugin_params.peer_processor_id', 1)
-        self._peer_processor_id = int(os.environ.get("FSW_SBN_PROCESSOR_ID"))
-        if not self._peer_processor_id:
-            self._peer_processor_id = self._node.get_parameter('plugin_params.peer_processor_id').get_parameter_value(). \
+        self._peer_processor_id = self._node.get_parameter('plugin_params.peer_processor_id').get_parameter_value(). \
                 integer_value
         self._node.get_logger().info("  using peer_processor_id: " + str(self._peer_processor_id))
 
         self._node.declare_parameter('plugin_params.peer_spacecraft_id', 0x44)
-        self._peer_spacecraft_id = os.environ.get("FSW_SBN_SPACECRAFT_ID")
-        if not self._peer_spacecraft_id:
-            self._peer_spacecraft_id = self._node.get_parameter('plugin_params.peer_spacecraft_id').get_parameter_value(). \
+        self._peer_spacecraft_id = self._node.get_parameter('plugin_params.peer_spacecraft_id').get_parameter_value(). \
                 integer_value
         self._node.get_logger().info("  using peer_spacecraft_id: " + str(self._peer_spacecraft_id))
 
