@@ -8,8 +8,8 @@ from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 def generate_launch_description():
 
     # Argument to set cfe_config file to use, dependent on your specific setup
-    # default: cfe_config.yaml is good for single-host setups 
-    # alternative: cfe_config_multihost.yaml is good for multihost setups, such as the docker demo 
+    # default: cfe_sbn_config.yaml is good for single-host setups 
+    # alternative: cfe_sbn_config_multihost.yaml is good for multihost setups, such as the docker demo 
     cfe_sbn_config = LaunchConfiguration('cfe_sbn_config')
     cfe_sbn_config_launch_arg = DeclareLaunchArgument('cfe_sbn_config', default_value='cfe_sbn_config.yaml',
                             description='cfe_sbn_config yaml file')
