@@ -70,7 +70,7 @@ class FSWPlugin(FSWPluginInterface):
                 integer_value
         self._node.get_logger().info("  using peer_processor_id: " + str(self._peer_processor_id))
 
-        self._node.declare_parameter('plugin_params.peer_spacecraft_id', 0x44)
+        self._node.declare_parameter('plugin_params.peer_spacecraft_id', 0x42)
         self._peer_spacecraft_id = self._node.get_parameter('plugin_params.peer_spacecraft_id').get_parameter_value(). \
                 integer_value
         self._node.get_logger().info("  using peer_spacecraft_id: " + str(self._peer_spacecraft_id))
