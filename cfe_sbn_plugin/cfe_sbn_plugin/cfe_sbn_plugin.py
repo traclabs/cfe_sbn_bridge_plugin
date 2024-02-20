@@ -36,13 +36,6 @@ class FSWPlugin(FSWPluginInterface):
         self._namespace = self._node.get_parameter('namespace'). \
             get_parameter_value().string_value
 
-        self._node.declare_parameter('plugin_params.cfs_root', '~/code/cFS')
-        self._cfs_root = self._node.get_parameter('plugin_params.cfs_root').get_parameter_value(). \
-            string_value
-        if '~' in self._cfs_root:
-            self._cfs_root = os.path.expanduser(self._cfs_root)
-        self._node.get_logger().info("  using cfs_root: " + self._cfs_root)
-
         self._node.declare_parameter('plugin_params.msg_pkg', 'cfe_msgs')
         self._msg_pkg = self._node.get_parameter('plugin_params.msg_pkg').get_parameter_value(). \
             string_value
