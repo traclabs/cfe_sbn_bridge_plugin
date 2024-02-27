@@ -38,7 +38,7 @@ class SBNReceiver():
                 if len(data) < 6:
                     return
 
-                self._node.get_logger().debug(str(self.handle_sbn_msg(data)))
+                self._node.get_logger().debug(str(self.handle_sbn_msg(data,addr)))
             except socket.error:
                 return
 
@@ -79,14 +79,18 @@ class SBNReceiver():
 
         return (protocol_id)
 
-    def handle_sbn_msg(self, msg):
+    def handle_sbn_msg(self, msg, addr):
         hdr = SBNMessageHdr.from_bytes(msg)
 
         if hdr is not None:
-            # Find peer definition (TODO: or .add if new? need src ip/port to do so).
+            # Find peer definition
             peer = SBNPeer.find(hdr.sc_id, hdr.proc_id)
             if peer is None:
-                self._node.get_logger().error("Received message from unknown peer (" + str(hdr.sc_id) + ", " + str(hdr.proc_id) + "), discarding")
+                self._node.get_logger().error(f"Received message from unknown peer ({hdr.sc_id}, {hdr.proc_id}), registering at inferred addr {addr[0]}:{addr[1]} instead")
+                peer = self.add_peer(addr[0],addr[1],hdr.sc_id,hdr.proc_id)
+                if peer is None:
+                    self._node.get_logger().error("FAILED to create new inferred peer, discarding message")
+                    return None
 
             # Update connection/heartbeat status for this peer
             peer.connected()

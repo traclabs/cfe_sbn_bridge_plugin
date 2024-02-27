@@ -14,7 +14,7 @@ cfe_sbn_bridge:
       rosout_file_max_length: 64
       rosout_function_max_length: 32
       # fsw information
-      peer_ip: "127.0.0.1"
-      peer_port: 2234
-      peer_processor_id: 1        # Processor id (1 or 2, for cpu1 or cpu2)
+      peer_ip: "10.5.0.3"         # IP for fsw (if same machine, use 127.0.0.1) 
+      peer_port: 2235             # 2234 for cpu1, 2235 for cpu2
+      peer_processor_id: 2        # Processor id (1 or 2, for cpu1 - singlehost setup, or cpu2 - multihost setup)
 

@@ -47,16 +47,35 @@ class FSWPlugin(FSWPluginInterface):
             get_parameter_value().integer_value
         self._node.get_logger().info("  using udp_receive_port: " + str(self._udp_receive_port))
 
-        self._node.declare_parameter('plugin_params.udp_send_port', 2234)
-        self._udp_send_port = self._node.get_parameter('plugin_params.udp_send_port'). \
-            get_parameter_value().integer_value
-        self._node.get_logger().info("  using udp_send_port: " + str(self._udp_send_port))
+        self._node.declare_parameter('plugin_params.peer_port', 2234)
+        self._peer_port = self._node.get_parameter('plugin_params.peer_port'). \
+                get_parameter_value().integer_value
+        self._node.get_logger().info("  using peer_port: " + str(self._peer_port))
 
-        self._node.declare_parameter('plugin_params.udp_ip', '127.0.0.1')
-        self._udp_ip = self._node.get_parameter('plugin_params.udp_ip').get_parameter_value(). \
-            string_value
-        self._node.get_logger().info("  using udp_ip: " + self._udp_ip)
+        # udp_ip_desc = ParameterDescriptor(description="IP Address to bind on for receiving traffic")
+        self._node.declare_parameter('plugin_params.udp_receive_ip', '0.0.0.0')#,udp_ip_desc)
+        self._udp_ip = self._node.get_parameter('plugin_params.udp_receive_ip').get_parameter_value(). \
+                string_value
+        self._node.get_logger().info("  using udp_receive_ip: " + self._udp_ip)
 
+        # TODO: Consider syntax that permits defining multiple SBN peers
+        # peer_udp_ip_desc = ParameterDescriptor(description="IP Address of primary SBN peer")
+        self._node.declare_parameter('plugin_params.peer_ip', '127.0.0.1')#,udp_ip_desc)
+        self._peer_udp_ip = self._node.get_parameter('plugin_params.peer_ip').get_parameter_value(). \
+                string_value
+        self._node.get_logger().info("  using peer_ip: " + self._peer_udp_ip)
+        
+        self._node.declare_parameter('plugin_params.peer_processor_id', 1)
+        self._peer_processor_id = self._node.get_parameter('plugin_params.peer_processor_id').get_parameter_value(). \
+                integer_value
+        self._node.get_logger().info("  using peer_processor_id: " + str(self._peer_processor_id))
+
+        self._node.declare_parameter('plugin_params.peer_spacecraft_id', 0x42)
+        self._peer_spacecraft_id = self._node.get_parameter('plugin_params.peer_spacecraft_id').get_parameter_value(). \
+                integer_value
+        self._node.get_logger().info("  using peer_spacecraft_id: " + str(self._peer_spacecraft_id))
+
+        
         self._node.declare_parameter("plugin_params.processor_id", 0x2)
         self._processor_id = self._node.get_parameter('plugin_params.processor_id').get_parameter_value().integer_value
         self._node.declare_parameter("plugin_params.spacecraft_id", 0x42)
@@ -72,6 +91,7 @@ class FSWPlugin(FSWPluginInterface):
         self._rosout_file_max_length = self._node.get_parameter('plugin_params.rosout_file_max_length').get_parameter_value().integer_value
         self._node.declare_parameter("plugin_params.rosout_function_max_length", 32)
         self._rosout_function_max_length = self._node.get_parameter('plugin_params.rosout_function_max_length').get_parameter_value().integer_value
+
 
         # Create the subscribe/unsubscribe services.
         self._subscribe_srv = self._node.create_service(Subscribe,
@@ -136,8 +156,8 @@ class FSWPlugin(FSWPluginInterface):
                                                                     self.subscription_scanning_timer_callback)
 
         # TODO: Update cfg yaml to define a list of peers.
-        self._sbn_receiver.add_peer(self._udp_ip, self._udp_send_port, 0x42, 1)
-
+        self._sbn_receiver.add_peer(self._peer_udp_ip, self._peer_port, self._peer_spacecraft_id, self._peer_processor_id)
+        
         # Testing.  Subscribe to the /rosout topic to get the rosout messages.  This is on the flight side
         self._subscribe_srv = self._node.create_subscription(Log, '/rosout', self.rosout_callback, 10)
 
